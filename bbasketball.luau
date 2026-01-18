@@ -28,7 +28,7 @@ local Window = WindUI:CreateWindow({
     Author = "by @s3curee and @twinnn",
     Folder = "Oceana",
     Transparent = true,
-    Theme = "My Theme",
+    Theme = "Sky",
     ToggleKey = Enum.KeyCode.RightControl,
     NewElements = true,
     User = {
@@ -55,6 +55,7 @@ Window:EditOpenButton({
 local settings = {
     Lagger = false,
     AntiLag = true,
+    RemoveBillboards = true,
     LaggerStrength = 20,
     SpeedBoost = false,
     SpeedBoostSpeed = 20
@@ -70,8 +71,6 @@ local function char_info()
         CHAR = character,
         HUM = hum,
         ROOT = root,
-        DISPLAY = LocalPlayer.DisplayName,
-        NAME = LocalPlayer.Name,
         LP = LocalPlayer,
     }
 end
@@ -97,6 +96,7 @@ LagTab:Toggle({
         settings.AntiLag = state
     end
 })
+
 
 LagTab:Toggle({
     Title = "Lagger",
@@ -144,50 +144,40 @@ PlayerTab:Slider({
     end
 })
 
-local function kl(obj)
-    if not settings.AntiLag then return end
+local function clean_object(obj)
     if obj:FindFirstAncestor("WindUI") or obj.Name == "WindUI" then return end
 
-    if obj:IsA("TextLabel") or obj:IsA("BillboardGui") or obj:IsA("Sound") or obj:IsA("ScreenGui") then
-        task.spawn(function()
-            pcall(function() obj:Destroy() end)
-        end)
+    if settings.AntiLag then
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+            obj.Enabled = false
+        end
+        if obj:IsA("Decal") or obj:IsA("Texture") then
+            obj.Transparency = 1
+        end
     end
 
-    if obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
-        local p = obj.Parent
-        if p and (p:IsA("ScreenGui") or p:IsA("BillboardGui") or p:IsA("Frame") or p:IsA("TextLabel")) then
-            task.spawn(function()
-                pcall(function() obj:Destroy() end)
-            end)
+    if settings.RemoveBillboards then
+        if obj:IsA("BillboardGui") then
+            obj.Enabled = false
+        end
+        if obj:IsA("TextLabel") and obj:FindFirstAncestorOfClass("BillboardGui") then
+            obj.Text = ""
+            obj.Visible = false
         end
     end
 end
 
-local function mp(path)
+local function setup_observer(path)
     if not path then return end
-    path.DescendantAdded:Connect(kl)
+    path.DescendantAdded:Connect(clean_object)
     for _, v in ipairs(path:GetDescendants()) do
-        kl(v)
+        clean_object(v)
     end
 end
 
 task.spawn(function()
-    mp(LocalPlayer:WaitForChild("PlayerGui"))
-end)
-
-LocalPlayer.CharacterAdded:Connect(mp)
-if LocalPlayer.Character then mp(LocalPlayer.Character) end
-
-for _, v in ipairs(Players:GetPlayers()) do
-    if v ~= LocalPlayer then
-        v.CharacterAdded:Connect(mp)
-        if v.Character then mp(v.Character) end
-    end
-end
-
-Players.PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(mp)
+    setup_observer(game.Workspace)
+    setup_observer(game.Players.LocalPlayer:WaitForChild("PlayerGui"))
 end)
 
 RunService.Heartbeat:Connect(function()
