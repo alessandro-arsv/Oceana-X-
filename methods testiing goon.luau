@@ -1,3 +1,5 @@
+--[[ doesn't work 
+
 local function TeleportChests()
     local itemsFolder = workspace:FindFirstChild("Items")
     local allItems = {}
@@ -25,4 +27,4 @@ local function TeleportChests()
     end
 end
 
-TeleportChests() 
+TeleportChests() ]]

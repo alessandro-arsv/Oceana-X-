@@ -20,7 +20,10 @@ local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footag
 
 local remotes = {
     DMG = game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer"),
-    RPI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestPlantItem")
+    RPI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestPlantItem"),
+    SDI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("StopDraggingItem"),
+    RSDI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"),
+    ROIC = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest")
 }
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
@@ -28,9 +31,9 @@ local Window = WindUI:CreateWindow({
     Author = "by @s3curee and @twinnn",
     Folder = "Oceana",
     Transparent = true,
-    Theme = "Dark",
+    Theme = "Sky",
     ToggleKey = Enum.KeyCode.RightControl,
-
+    NewElements = true,
     User = {
         Enabled = true,
         Anonymous = false,
@@ -53,18 +56,6 @@ Window:EditOpenButton({
     Enabled = true,
     Draggable = true,
 })
-
-WindUI:AddTheme({ 
-    Name = "My Theme", 
-    Accent = Color3.fromHex("#18181b"), 
-    Background = Color3.fromHex("#101010"), 
-    Outline = Color3.fromHex("#FFFFFF"), 
-    Text = Color3.fromHex("#FFFFFF"), 
-    Placeholder = Color3.fromHex("#7a7a7a"), 
-    Button = Color3.fromHex("#52525b"), 
-    Icon = Color3.fromHex("#a1a1aa"), 
-})
-
 function char_info() 
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
@@ -78,22 +69,41 @@ function char_info()
     }
 end
 
+function item_teleport(item)
+
+    local args = { item }
+    remotes.RSDI:FireServer(unpack(args))
+    task.wait(0.03)
+    if item:IsA("BasePart") then
+        item.CFrame = char_info().ROOT.CFrame + Vector3.new(0, 3, 0)
+    elseif item:IsA("Model") and item.PrimaryPart then
+        item:SetPrimaryPartCFrame(char_info().ROOT.CFrame + Vector3.new(0, 3, 0))
+    end
+
+    remotes.SDI:FireServer(unpack(args))
+end
+
+
 local settings = {
     SpamPlant = false,
     PlantOrbit = false,
     Plant = nil,
     OrbitSpeed = 5,
     OrbitRadius = 10,
+    Walkspeed = 16,
+    WalkspeedEnabled = false,
+    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest"},
 }
-
+-- SAPLINGS
 local SaplingsTab = Window:Tab({ 
     Title = "Saplings",
-    Icon = "solar:flame-bold",
-    IconColor = Color3.fromHex("#ff8c00"),
+    Icon = "leafy-green",
+    IconColor = Color3.fromHex("#2bfb35"),
     IconShape = "Square" 
 })
 SaplingsTab:Toggle({
     Title = "Spam Plant",
+    Type = "Toggle",
     Value = false,
     Callback = function(state) 
         settings.SpamPlant = state
@@ -101,6 +111,7 @@ SaplingsTab:Toggle({
 })
 SaplingsTab:Toggle({
     Title = "Plant orbit",
+    type = "Toggle",
     Value = false,
     Callback = function(state) 
         settings.PlantOrbit = state
@@ -131,10 +142,11 @@ SaplingsTab:Slider({
     end
 })
 
+-- ITEMS TAB
 local ItemsTab = Window:Tab({ 
     Title = "Items",
-    Icon = "solar:flame-bold",
-    IconColor = Color3.fromHex("#ff8c00"),
+    Icon = "align-center-vertical",
+    IconColor = Color3.fromHex("#6c4c22"),
     IconShape = "Square" 
 })
 ItemsTab:Button({
@@ -145,18 +157,18 @@ ItemsTab:Button({
             allItems = itemsFolder:GetChildren()
         end
         for _, item in ipairs(allItems) do
-            if item.Name ~= "^Item Chest" then
-                local args = { item }
-                game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"):FireServer(unpack(args))
-            task.wait(0.03)
-            if item:IsA("BasePart") then
-                item.CFrame = i.ROOT.CFrame + Vector3.new(0, 3, 0)
-            elseif item:IsA("Model") and item.PrimaryPart then
-                item:SetPrimaryPartCFrame(i.ROOT.CFrame + Vector3.new(0, 3, 0))
+            local isExcluded = false
+            for _, excludeName in ipairs(settings.ExcludeItems) do
+                if item.Name == excludeName then
+                    isExcluded = true
+                    break
+                end
+            end
+            if not isExcluded then
+                item_teleport(item)
             end
         end
     end
-end
 })
 ItemsTab:Button({
     Title = "Bring all flammables",
@@ -165,7 +177,7 @@ ItemsTab:Button({
         if itemsFolder then
             allItems = itemsFolder:GetChildren()
         end
-        local flammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister"}
+        local flammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel"}
         for _, item in ipairs(allItems) do
             local isFlammable = false
             for _, flammableName in ipairs(flammableItems) do
@@ -175,34 +187,99 @@ ItemsTab:Button({
                 end
             end
             if isFlammable then
-                local args = { item }
-                game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"):FireServer(unpack(args))
-                task.wait(0.03)
-                if item:IsA("BasePart") then
-                    item.CFrame = i.ROOT.CFrame + Vector3.new(0, 3, 0)
-                elseif item:IsA("Model") and item.PrimaryPart then
-                    item:SetPrimaryPartCFrame(i.ROOT.CFrame + Vector3.new(0, 3, 0))
-                end
+                item_teleport(item)
             end
         end
     end
 })
+ItemsTab:Button({
+    Title = "Bring all scrap",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local scrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine"}
+        for _, item in ipairs(allItems) do
+            local isScrap = false
+            for _, scrapName in ipairs(scrapItems) do
+                if item.Name == scrapName then
+                    isScrap = true
+                    break
+                end
+            end
+            if isScrap then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Open all chests",
+    Callback = function()
+        for _,v in workspace.Items:GetChildren() do
+            local args = {
+                v
+            }
+            remotes.ROIC:FireServer(unpack(args))
+        end
+    end
+})
+-- PLAYER TAB
+local PlayerTab = Window:Tab({ 
+    Title = "Player",
+    Icon = "user",
+    IconColor = Color3.fromRGB(20, 18, 150),
+    IconShape = "Square" 
+})
+PlayerTab:Button({
+    Title = "God Mode",
+    Desc = "use again if you put on armor or eat food",
+    Callback = function() 
+        game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer"):FireServer(-math.huge)
+    end
+})
+PlayerTab:Toggle({
+    Title = "Walkspeed enabled",
+    Type = "Toggle",
+    Value = false, -- default value
+    Callback = function(state) 
+        settings.WalkspeedEnabled = state
+    end
+})
+
+PlayerTab:Slider({
+    Title = "Walkspeed",
+    Step = 1,
+    Value = {
+        Min = 16,
+        Max = 100,
+        Default = 16,
+    },
+    Callback = function(value)
+        settings.Walkspeed = value
+    end
+})
+
 -- plant orbit
 local a = 0
 game:GetService("RunService").RenderStepped:Connect(function()
     local i = char_info()
     if not i.CHAR then return end
     a = a + math.rad(settings.OrbitSpeed)
-    if settings.SpamPlant and settings.Plant then
-        remotes.RPI:InvokeServer(settings.Plant, i.ROOT.Position)
+    if settings.SpamPlant and (settings.Plant or workspace.Items:FindFirstChild("Sapling")) then
+        remotes.RPI:InvokeServer(settings.Plant or workspace.Items:FindFirstChild("Sapling"), i.ROOT.Position)
     end
-    if settings.PlantOrbit and settings.Plant then
+    if settings.PlantOrbit and (settings.Plant or workspace.Items:FindFirstChild("Sapling")) then
         local of = Vector3.new(
             math.cos(a) * settings.OrbitRadius,
             0,
             math.sin(a) * settings.OrbitRadius
         )
-        remotes.RPI:InvokeServer(settings.Plant,i.ROOT.Position + of)
+        remotes.RPI:InvokeServer(settings.Plant or workspace.Items:FindFirstChild("Sapling") ,i.ROOT.Position + of)
+    end
+    if settings.WalkspeedEnabled then
+        i.HUM.WalkSpeed = settings.Walkspeed
     end
 end)
 

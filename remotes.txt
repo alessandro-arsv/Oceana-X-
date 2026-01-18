@@ -4,18 +4,15 @@ local args = {
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestBagStoreItem"):InvokeServer(unpack(args))
 
-
 local args = {
 	workspace:WaitForChild("Items"):WaitForChild("Carrot")
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"):FireServer(unpack(args))
 
-
 local args = {
 	workspace:WaitForChild("Items"):WaitForChild("Item Chest5")
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest"):FireServer(unpack(args))
-
 
 local args = {
 	"FireAllClients",
@@ -29,13 +26,11 @@ local args = {
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ReplicateBullet"):FireServer(unpack(args))
 
-
 local args = {
 	Instance.new("Model", nil),
 	12
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RegisterProjectile"):InvokeServer(unpack(args))
-
 
 local args = {
 	vector.create(15.344391822814941, 0.9869060516357422, -35.18553924560547),
@@ -43,15 +38,33 @@ local args = {
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("SplashProjectileExplode"):InvokeServer(unpack(args))
 
-
 local args = {
 	Instance.new("Model", nil),
 	vector.create(46.41654586791992, -0.012301921844482422, -60.917930603027344)
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestPlantItem"):InvokeServer(unpack(args))
 
-
 local args = {
 	Instance.new("Model", nil)
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestRevivePlayer"):FireServer(unpack(args))
+
+local args = {
+	"FireAllClients",
+	"Eat",
+	{
+		Instance = game:GetService("Players").LocalPlayer.Character:WaitForChild("Head"),
+		Volume = 0.15
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestReplicateSound"):FireServer(unpack(args))
+
+local args = {
+	Instance.new("Model", nil)
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestConsumeItem"):InvokeServer(unpack(args))
+
+local args = {
+	workspace:WaitForChild("Items"):WaitForChild("Old Radio")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("StopDraggingItem"):FireServer(unpack(args))

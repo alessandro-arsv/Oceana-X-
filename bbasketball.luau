@@ -16,17 +16,18 @@ local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/" .. vers .. "/dist/main.lua"))()
 
 local remotes = {
+    c = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Call")
 }
 
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
     Icon = "door-open",
-    Author = "by @s3curee",
+    Author = "by @s3curee and @twinnn",
     Folder = "Oceana",
     Transparent = true,
-    Theme = "Dark",
+    Theme = "Sky",
     ToggleKey = Enum.KeyCode.RightControl,
-
+    NewElements = true,
     User = {
         Enabled = true,
         Anonymous = false,
@@ -48,17 +49,6 @@ Window:EditOpenButton({
     OnlyMobile = false,
     Enabled = true,
     Draggable = true,
-})
-
-WindUI:AddTheme({ 
-    Name = "My Theme", 
-    Accent = Color3.fromHex("#18181b"), 
-    Background = Color3.fromHex("#101010"), 
-    Outline = Color3.fromHex("#FFFFFF"), 
-    Text = Color3.fromHex("#FFFFFF"), 
-    Placeholder = Color3.fromHex("#7a7a7a"), 
-    Button = Color3.fromHex("#52525b"), 
-    Icon = Color3.fromHex("#a1a1aa"), 
 })
 
 function char_info() 
@@ -96,6 +86,7 @@ local PlayerTab = Window:Tab({
 }) -- player
 LagTab:Toggle({
     Title = "AntiLag",
+    Type = "Toggle",
     Value = true,
     Callback = function(state) 
         settings.AntiLag = state
@@ -103,6 +94,7 @@ LagTab:Toggle({
 })
 LagTab:Toggle({
     Title = "Lagger",
+    Type = "Toggle",
     Value = false,
     Callback = function(state) 
         settings.Lagger = state
@@ -123,6 +115,7 @@ LagTab:Slider({
 -- local player
 PlayerTab:Toggle({
     Title = "SpeedBoost",
+    Type = "Toggle",
     Value = false,
     Callback = function(state) 
         settings.SpeedBoost = state
@@ -176,7 +169,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
     if settings.Lagger then
         for count = 1, settings.LaggerStrength do
             if not settings.Lagger then break end
-            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Call"):FireServer()
+            remotes.c:FireServer()
         end
     end
     if settings.SpeedBoost then
