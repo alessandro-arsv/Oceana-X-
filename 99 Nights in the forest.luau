@@ -11,14 +11,20 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+local itemsFolder = workspace:FindFirstChild("Items")
+local allItems = {}
+
 
 local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/" .. vers .. "/dist/main.lua"))()
 
 local remotes = {
-    c = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Call")
+    DMG = game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer"),
+    RPI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestPlantItem"),
+    SDI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("StopDraggingItem"),
+    RSDI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"),
+    ROIC = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest")
 }
-
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
     Icon = "door-open",
@@ -50,7 +56,6 @@ Window:EditOpenButton({
     Enabled = true,
     Draggable = true,
 })
-
 function char_info() 
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
@@ -64,115 +69,233 @@ function char_info()
     }
 end
 
+function item_teleport(item)
+
+    local args = { item }
+    remotes.RSDI:FireServer(unpack(args))
+    task.wait(0.03)
+    if item:IsA("BasePart") then
+        item.CFrame = char_info().ROOT.CFrame + Vector3.new(0, 3, 0)
+    elseif item:IsA("Model") and item.PrimaryPart then
+        item:SetPrimaryPartCFrame(char_info().ROOT.CFrame + Vector3.new(0, 3, 0))
+    end
+
+    remotes.SDI:FireServer(unpack(args))
+end
+
+
 local settings = {
-    Lagger = false,
-    AntiLag = true,
-    LaggerStrength = 10,
-    SpeedBoost = false,
-    SpeedBoostSpeed = 16
+    SpamPlant = false,
+    PlantOrbit = false,
+    Plant = nil,
+    OrbitSpeed = 5,
+    OrbitRadius = 10,
+    Walkspeed = 16,
+    WalkspeedEnabled = false,
+    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest"},
 }
-
-local LagTab = Window:Tab({ 
-    Title = "Lag",
-    Icon = "solar:flame-bold",
-    IconColor = Color3.fromHex("#ff8c00"),
+-- SAPLINGS
+local SaplingsTab = Window:Tab({ 
+    Title = "Saplings",
+    Icon = "leafy-green",
+    IconColor = Color3.fromHex("#2bfb35"),
     IconShape = "Square" 
 })
+SaplingsTab:Toggle({
+    Title = "Spam Plant",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.SpamPlant = state
+    end
+})
+SaplingsTab:Toggle({
+    Title = "Plant orbit",
+    type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.PlantOrbit = state
+    end
+})
+SaplingsTab:Slider({
+    Title = "Orbit radius",
+    Step = 1,
+    Value = {
+        Min = 5,
+        Max = 50,
+        Default = 10,
+    },
+    Callback = function(value)
+        settings.OrbitRadius = value
+    end
+})
+SaplingsTab:Slider({
+    Title = "Orbit speed",
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 20,
+        Default = 5,
+    },
+    Callback = function(value)
+        settings.OrbitSpeed = value
+    end
+})
+
+-- ITEMS TAB
+local ItemsTab = Window:Tab({ 
+    Title = "Items",
+    Icon = "align-center-vertical",
+    IconColor = Color3.fromHex("#6c4c22"),
+    IconShape = "Square" 
+})
+ItemsTab:Button({
+    Title = "Bring all items",
+    Callback = function() 
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        for _, item in ipairs(allItems) do
+            local isExcluded = false
+            for _, excludeName in ipairs(settings.ExcludeItems) do
+                if item.Name == excludeName then
+                    isExcluded = true
+                    break
+                end
+            end
+            if not isExcluded then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all flammables",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local flammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel"}
+        for _, item in ipairs(allItems) do
+            local isFlammable = false
+            for _, flammableName in ipairs(flammableItems) do
+                if item.Name == flammableName then
+                    isFlammable = true
+                    break
+                end
+            end
+            if isFlammable then
+                item_teleport(item)
+            end
+        end
+    end
+})
+
+ItemsTab:Button({
+    Title = "Bring all scrap",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local scrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine"}
+        for _, item in ipairs(allItems) do
+            local isScrap = false
+            for _, scrapName in ipairs(scrapItems) do
+                if item.Name == scrapName then
+                    isScrap = true
+                    break
+                end
+            end
+            if isScrap then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Open all chests",
+    Callback = function()
+        for _,v in workspace.Items:GetChildren() do
+            local args = {
+                v
+            }
+            remotes.ROIC:FireServer(unpack(args))
+        end
+    end
+})
+-- PLAYER TAB
 local PlayerTab = Window:Tab({ 
-    Title = "LocalPlayer",
-    Icon = "solar:snowflake-bold",
-    IconColor = Color3.fromHex("#2bfb3f"),
+    Title = "Player",
+    Icon = "user",
+    IconColor = Color3.fromRGB(20, 18, 150),
     IconShape = "Square" 
-}) -- player
-LagTab:Toggle({
-    Title = "AntiLag",
-    Type = "Toggle",
-    Value = true,
-    Callback = function(state) 
-        settings.AntiLag = state
+})
+PlayerTab:Button({
+    Title = "God Mode",
+    Desc = "use again if you put on armor or eat food",
+    Callback = function() 
+        game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer"):FireServer(-math.huge)
     end
 })
-LagTab:Toggle({
-    Title = "Lagger",
-    Type = "Toggle",
-    Value = false,
-    Callback = function(state) 
-        settings.Lagger = state
-    end
-})
-LagTab:Slider({
-    Title = "Lag Strength",
-    Step = 10,
-    Value = {
-        Min = 20,
-        Max = 100,
-        Default = 10,
-    },
-    Callback = function(value)
-        settings.LaggerStrength = value
-    end
-})
--- local player
 PlayerTab:Toggle({
-    Title = "SpeedBoost",
+    Title = "Walkspeed enabled",
     Type = "Toggle",
-    Value = false,
+    Value = false, -- default value
     Callback = function(state) 
-        settings.SpeedBoost = state
+        settings.WalkspeedEnabled = state
     end
 })
+
 PlayerTab:Slider({
-    Title = "Speedboost speed",
-    Step = 10,
+    Title = "Walkspeed",
+    Step = 1,
     Value = {
-        Min = 20,
+        Min = 16,
         Max = 100,
-        Default = 10,
+        Default = 16,
     },
     Callback = function(value)
-        settings.SpeedBoostSpeed = value
+        settings.Walkspeed = value
     end
 })
 
--- totally not geminied
-local function kl(obj)
-    if not settings.AntiLag then return end
-    if obj:FindFirstAncestor("WindUI") then return end
-
-    if obj:IsA("TextLabel") or obj:IsA("BillboardGui") or obj:IsA("Sound") or obj:IsA("ScreenGui") then
-        task.spawn(function()
-            obj:Destroy()
-        end)
-    end
-
-    if obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
-        local p = obj.Parent
-        if p:IsA("ScreenGui") or p:IsA("BillboardGui") or p:IsA("Frame") or p:IsA("TextLabel") then
-            task.spawn(function()
-                obj:Destroy()
-            end)
-        end
-    end
-end
-
-local function mp(path)
-    if not path then return end
-    path.DescendantAdded:Connect(kl)
-end
-
-mp(LocalPlayer.PlayerGui)
-LocalPlayer.CharacterAdded:Connect(mp)
-if LocalPlayer.Character then mp(LocalPlayer.Character) end
+-- plant orbit
+local a = 0
 game:GetService("RunService").RenderStepped:Connect(function()
-    local data = char_info()
-    if not data.CHAR or not data.ROOT then return end
-    if settings.Lagger then
-        for count = 1, settings.LaggerStrength do
-            if not settings.Lagger then break end
-            remotes.c:FireServer()
+    local i = char_info()
+    if not i.CHAR then return end
+    a = a + math.rad(settings.OrbitSpeed)
+    if settings.SpamPlant and (settings.Plant or workspace.Items:FindFirstChild("Sapling")) then
+        remotes.RPI:InvokeServer(settings.Plant or workspace.Items:FindFirstChild("Sapling"), i.ROOT.Position)
+    end
+    if settings.PlantOrbit and (settings.Plant or workspace.Items:FindFirstChild("Sapling")) then
+        local of = Vector3.new(
+            math.cos(a) * settings.OrbitRadius,
+            0,
+            math.sin(a) * settings.OrbitRadius
+        )
+        remotes.RPI:InvokeServer(settings.Plant or workspace.Items:FindFirstChild("Sapling") ,i.ROOT.Position + of)
+    end
+    if settings.WalkspeedEnabled then
+        i.HUM.WalkSpeed = settings.Walkspeed
+    end
+end)
+
+-- hook
+local old;
+old = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+
+    if self == remotes.RPI then
+        if method:lower() == "invokeserver" or method:lower() == "fireserver" then
+            if args[1] then
+                settings.Plant = args[1]
+            end
         end
     end
-    if settings.SpeedBoost then
-        data.HUM.WalkSpeed = settings.SpeedBoostSpeed
-    end
+    return old(self, ...)
 end)
