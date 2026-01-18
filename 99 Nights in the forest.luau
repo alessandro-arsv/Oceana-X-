@@ -12,13 +12,14 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
+
 local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/" .. vers .. "/dist/main.lua"))()
 
 local remotes = {
-    DMG = game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer")
+    DMG = game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer"),
+    RPI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestPlantItem")
 }
-
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
     Icon = "door-open",
@@ -76,35 +77,106 @@ function char_info()
 end
 
 local settings = {
-    SpamPlant = false
+    SpamPlant = false,
+    PlantOrbit = false,
+    Plant = nil,
+    OrbitSpeed = 5,
+    OrbitRadius = 10,
+    BringAllItems = false
 }
 
-WindUI:Notify({
-    Title = "Oceana X Loaded",
-    Content = "Bypasses initialized. Welcome back.",
-    Duration = 3
-})
-
-local MainTab = Window:Tab({ 
+local SaplingsTab = Window:Tab({ 
     Title = "Saplings",
     Icon = "solar:flame-bold",
     IconColor = Color3.fromHex("#ff8c00"),
     IconShape = "Square" 
 })
-MainTab:Toggle({
+SaplingsTab:Toggle({
     Title = "Spam Plant",
     Value = false,
     Callback = function(state) 
-        settings.SpamPLant = state
+        settings.SpamPlant = state
+    end
+})
+SaplingsTab:Toggle({
+    Title = "Plant orbit",
+    Value = false,
+    Callback = function(state) 
+        settings.PlantOrbit = state
+    end
+})
+SaplingsTab:Slider({
+    Title = "Orbit radius",
+    Step = 1,
+    Value = {
+        Min = 5,
+        Max = 50,
+        Default = 10,
+    },
+    Callback = function(value)
+        settings.OrbitRadius = value
+    end
+})
+SaplingsTab:Slider({
+    Title = "Orbit speed",
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 20,
+        Default = 5,
+    },
+    Callback = function(value)
+        settings.OrbitSpeed = value
     end
 })
 
-task.spawn(function()
-    while task.wait() do
-        if settings.SpamPlant then
-            
-        end
+local ItemsTab = Window:Tab({ 
+    Title = "Items",
+    Icon = "solar:flame-bold",
+    IconColor = Color3.fromHex("#ff8c00"),
+    IconShape = "Square" 
+})
+ItemsTab:Toggle({
+    Title = "Bring all items",
+    Value = false,
+    Callback = function(state) 
+        settings.BringAllItems = state
     end
+})
 
+
+
+
+local a = 0
+game:GetService("RunService").RenderStepped:Connect(function()
+    local i = char_info()
+    if not i.CHAR then return end
+    a = a + math.rad(settings.OrbitSpeed)
+    if settings.SpamPlant and settings.Plant then
+        remotes.RPI:InvokeServer(settings.Plant, i.ROOT.Position)
+    end
+    if settings.PlantOrbit and settings.Plant then
+        local of = Vector3.new(
+            math.cos(a) * settings.OrbitRadius,
+            math.sin(a) * settings.OrbitRadiu,
+            math.sin(a) * settings.OrbitRadius
+        )
+    remotes.RPI:InvokeServer(settings.Plant,i.ROOT.Position + of)
+    end
 end)
 
+-- hook
+local old;
+old = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+
+    if self == remotes.RPI then
+        if method:lower() == "invokeserver" or method:lower() == "fireserver" then
+            if args[1] then
+                settings.Plant = args[1]
+            end
+        end
+    end
+    return old(self, ...)
+end)
