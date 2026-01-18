@@ -1,10 +1,3 @@
--- 99 nights in the forest modification 
-
--- version 1.0.0
--- OCEANA X
--- yes everything uses windUI
--- this was pushed back i work on other things
-
 repeat task.wait() until game:IsLoaded()
 
 local RunService = game:GetService("RunService")
@@ -12,11 +5,21 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/" .. vers .. "/dist/main.lua"))()
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+WindUI:AddTheme({ 
+    Name = "My Theme", 
+    Accent = Color3.fromHex("#18181b"), 
+    Background = Color3.fromHex("#101010"), 
+    Outline = Color3.fromHex("#FFFFFF"), 
+    Text = Color3.fromHex("#FFFFFF"), 
+    Placeholder = Color3.fromHex("#7a7a7a"), 
+    Button = Color3.fromHex("#52525b"), 
+    Icon = Color3.fromHex("#a1a1aa"), 
+})
 
 local remotes = {
-    c = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Call")
+    c = ReplicatedStorage:WaitForChild("Remotes", 5):WaitForChild("Call", 5)
 }
 
 local Window = WindUI:CreateWindow({
@@ -25,15 +28,13 @@ local Window = WindUI:CreateWindow({
     Author = "by @s3curee and @twinnn",
     Folder = "Oceana",
     Transparent = true,
-    Theme = "Sky",
+    Theme = "My Theme",
     ToggleKey = Enum.KeyCode.RightControl,
     NewElements = true,
     User = {
         Enabled = true,
         Anonymous = false,
-        Callback = function()
-            print("clicked")
-        end,
+        Callback = function() end,
     },
 })
 
@@ -51,26 +52,29 @@ Window:EditOpenButton({
     Draggable = true,
 })
 
-function char_info() 
+local settings = {
+    Lagger = false,
+    AntiLag = true,
+    LaggerStrength = 20,
+    SpeedBoost = false,
+    SpeedBoostSpeed = 20
+}
+
+local function char_info() 
     local character = LocalPlayer.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+    if not character then return nil end
+    local hum = character:FindFirstChildOfClass("Humanoid")
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not hum or not root then return nil end
     return {
         CHAR = character,
-        HUM = character:FindFirstChildOfClass("Humanoid"),
-        ROOT = character.HumanoidRootPart,
+        HUM = hum,
+        ROOT = root,
         DISPLAY = LocalPlayer.DisplayName,
         NAME = LocalPlayer.Name,
         LP = LocalPlayer,
     }
 end
-
-local settings = {
-    Lagger = false,
-    AntiLag = true,
-    LaggerStrength = 10,
-    SpeedBoost = false,
-    SpeedBoostSpeed = 16
-}
 
 local LagTab = Window:Tab({ 
     Title = "Lag",
@@ -78,78 +82,83 @@ local LagTab = Window:Tab({
     IconColor = Color3.fromHex("#ff8c00"),
     IconShape = "Square" 
 })
+
 local PlayerTab = Window:Tab({ 
     Title = "LocalPlayer",
     Icon = "solar:snowflake-bold",
     IconColor = Color3.fromHex("#2bfb3f"),
     IconShape = "Square" 
-}) -- player
+})
+
 LagTab:Toggle({
     Title = "AntiLag",
-    Type = "Toggle",
     Value = true,
     Callback = function(state) 
         settings.AntiLag = state
     end
 })
+
 LagTab:Toggle({
     Title = "Lagger",
-    Type = "Toggle",
     Value = false,
     Callback = function(state) 
         settings.Lagger = state
     end
 })
+
 LagTab:Slider({
     Title = "Lag Strength",
-    Step = 10,
+    Step = 1,
     Value = {
-        Min = 20,
+        Min = 1,
         Max = 100,
-        Default = 10,
+        Default = 20,
     },
     Callback = function(value)
         settings.LaggerStrength = value
     end
 })
--- local player
+
 PlayerTab:Toggle({
     Title = "SpeedBoost",
-    Type = "Toggle",
     Value = false,
     Callback = function(state) 
         settings.SpeedBoost = state
+        if not state then
+            local data = char_info()
+            if data then data.HUM.WalkSpeed = 16 end
+        end
     end
 })
+
 PlayerTab:Slider({
     Title = "Speedboost speed",
-    Step = 10,
+    Step = 1,
     Value = {
-        Min = 20,
-        Max = 100,
-        Default = 10,
+        Min = 16,
+        Max = 200,
+        Default = 20,
     },
     Callback = function(value)
         settings.SpeedBoostSpeed = value
     end
 })
 
--- totally not geminied
 local function kl(obj)
     if not settings.AntiLag then return end
-    if obj:FindFirstAncestor("WindUI") then return end
+    if obj:FindFirstAncestor("WindUI") or obj.Name == "WindUI" then return end
 
     if obj:IsA("TextLabel") or obj:IsA("BillboardGui") or obj:IsA("Sound") or obj:IsA("ScreenGui") then
         task.spawn(function()
-            obj:Destroy()
+            pcall(function() obj:Destroy() end)
         end)
     end
 
     if obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
         local p = obj.Parent
-        if p:IsA("ScreenGui") or p:IsA("BillboardGui") or p:IsA("Frame") or p:IsA("TextLabel") then
+        if p and (p:IsA("ScreenGui") or p:IsA("BillboardGui") or p:IsA("Frame") or p:IsA("TextLabel")) then
             task.spawn(function()
-                obj:Destroy()
+                pcall(function() obj:Destroy() end)
             end)
         end
     end
@@ -158,31 +167,39 @@ end
 local function mp(path)
     if not path then return end
     path.DescendantAdded:Connect(kl)
+    for _, v in ipairs(path:GetDescendants()) do
+        kl(v)
+    end
 end
 
-for _,v in game.Players:GetPlayers() do
-    
-
-    mp(v.PlayerGui)
-v.CharacterAdded:Connect(mp)
-if v.Character then mp(v.Character) end
-end
-
-game.Players.PlayerAdded:Connect(function(plr)
-mp(plr.PlayerGui)
-plr.CharacterAdded:Connect(mp)
-if plr.Character then mp(plr.Character) end
+task.spawn(function()
+    mp(LocalPlayer:WaitForChild("PlayerGui"))
 end)
-game:GetService("RunService").RenderStepped:Connect(function()
+
+LocalPlayer.CharacterAdded:Connect(mp)
+if LocalPlayer.Character then mp(LocalPlayer.Character) end
+
+for _, v in ipairs(Players:GetPlayers()) do
+    if v ~= LocalPlayer then
+        v.CharacterAdded:Connect(mp)
+        if v.Character then mp(v.Character) end
+    end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(mp)
+end)
+
+RunService.Heartbeat:Connect(function()
     local data = char_info()
-    if not data.CHAR or not data.ROOT then return end
-    if settings.Lagger then
+    
+    if settings.Lagger and remotes.c then
         for count = 1, settings.LaggerStrength do
-            if not settings.Lagger then break end
             remotes.c:FireServer()
         end
     end
-    if settings.SpeedBoost then
+    
+    if settings.SpeedBoost and data then
         data.HUM.WalkSpeed = settings.SpeedBoostSpeed
     end
 end)
