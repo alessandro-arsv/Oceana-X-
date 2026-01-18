@@ -1,3 +1,10 @@
+-- 99 nights in the forest modification 
+
+-- version 1.0.0
+-- OCEANA X
+-- yes everything uses windUI
+-- this was pushed back i work on other things
+
 repeat task.wait() until game:IsLoaded()
 
 local RunService = game:GetService("RunService")
@@ -5,34 +12,15 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/" .. vers .. "/dist/main.lua"))()
 
-WindUI:AddTheme({ 
-    Name = "My Theme", 
-    Accent = Color3.fromHex("#18181b"), 
-    Background = Color3.fromHex("#101010"), 
-    Outline = Color3.fromHex("#FFFFFF"), 
-    Text = Color3.fromHex("#FFFFFF"), 
-    Placeholder = Color3.fromHex("#7a7a7a"), 
-    Button = Color3.fromHex("#52525b"), 
-    Icon = Color3.fromHex("#a1a1aa"), 
-})
+local Call = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Call", 5) or ReplicatedStorage:WaitForChild("Remotes", 5):WaitForChild("Call", 5)
 
-local remotes = nil
-
-if game.PlaceId == 113463598817292 then
-     remotes = {
-    c =game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Call", 5)
-}
-else
-     remotes = {
-    c = ReplicatedStorage:WaitForChild("Remotes", 5):WaitForChild("Call", 5)
-}
-end
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
     Icon = "door-open",
-    Author = "by @s3curee and @twinnn",
+    Author = "by @s3curee",
     Folder = "Oceana",
     Transparent = true,
     Theme = "Sky",
@@ -41,7 +29,9 @@ local Window = WindUI:CreateWindow({
     User = {
         Enabled = true,
         Anonymous = false,
-        Callback = function() end,
+        Callback = function()
+            print("clicked")
+        end,
     },
 })
 
@@ -59,28 +49,37 @@ Window:EditOpenButton({
     Draggable = true,
 })
 
-local settings = {
-    Lagger = false,
-    AntiLag = true,
-    RemoveBillboards = true,
-    LaggerStrength = 20,
-    SpeedBoost = false,
-    SpeedBoostSpeed = 20
-}
+WindUI:AddTheme({ 
+    Name = "My Theme", 
+    Accent = Color3.fromHex("#18181b"), 
+    Background = Color3.fromHex("#101010"), 
+    Outline = Color3.fromHex("#FFFFFF"), 
+    Text = Color3.fromHex("#FFFFFF"), 
+    Placeholder = Color3.fromHex("#7a7a7a"), 
+    Button = Color3.fromHex("#52525b"), 
+    Icon = Color3.fromHex("#a1a1aa"), 
+})
 
-local function char_info() 
+function char_info() 
     local character = LocalPlayer.Character
-    if not character then return nil end
-    local hum = character:FindFirstChildOfClass("Humanoid")
-    local root = character:FindFirstChild("HumanoidRootPart")
-    if not hum or not root then return nil end
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
     return {
         CHAR = character,
-        HUM = hum,
-        ROOT = root,
+        HUM = character:FindFirstChildOfClass("Humanoid"),
+        ROOT = character.HumanoidRootPart,
+        DISPLAY = LocalPlayer.DisplayName,
+        NAME = LocalPlayer.Name,
         LP = LocalPlayer,
     }
 end
+
+local settings = {
+    Lagger = false,
+    AntiLag = true,
+    LaggerStrength = 10,
+    SpeedBoost = false,
+    SpeedBoostSpeed = 16
+}
 
 local LagTab = Window:Tab({ 
     Title = "Lag",
@@ -88,14 +87,12 @@ local LagTab = Window:Tab({
     IconColor = Color3.fromHex("#ff8c00"),
     IconShape = "Square" 
 })
-
 local PlayerTab = Window:Tab({ 
     Title = "LocalPlayer",
     Icon = "solar:snowflake-bold",
     IconColor = Color3.fromHex("#2bfb3f"),
     IconShape = "Square" 
-})
-
+}) -- player
 LagTab:Toggle({
     Title = "AntiLag",
     Value = true,
@@ -103,100 +100,86 @@ LagTab:Toggle({
         settings.AntiLag = state
     end
 })
-
-
 LagTab:Toggle({
     Title = "Lagger",
     Value = false,
+    Desc = "They sort of patched this now it lags you more than others and only sort of lags on 100%",
     Callback = function(state) 
         settings.Lagger = state
     end
 })
-
 LagTab:Slider({
     Title = "Lag Strength",
-    Step = 1,
+    Step = 10,
     Value = {
-        Min = 1,
+        Min = 20,
         Max = 100,
-        Default = 20,
+        Default = 10,
     },
     Callback = function(value)
         settings.LaggerStrength = value
     end
 })
-
+-- local player
 PlayerTab:Toggle({
     Title = "SpeedBoost",
     Value = false,
     Callback = function(state) 
         settings.SpeedBoost = state
-        if not state then
-            local data = char_info()
-            if data then data.HUM.WalkSpeed = 16 end
-        end
     end
 })
-
 PlayerTab:Slider({
     Title = "Speedboost speed",
-    Step = 1,
+    Step = 10,
     Value = {
-        Min = 16,
-        Max = 200,
-        Default = 20,
+        Min = 20,
+        Max = 100,
+        Default = 10,
     },
     Callback = function(value)
         settings.SpeedBoostSpeed = value
     end
 })
 
-local function clean_object(obj)
-    if obj:FindFirstAncestor("WindUI") or obj.Name == "WindUI" then return end
+-- totally not geminied
+local function kl(obj)
+    if not settings.AntiLag then return end
+    if obj:FindFirstAncestor("WindUI") then return end
 
-    if settings.AntiLag then
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
-            obj.Enabled = false
-        end
-        if obj:IsA("Decal") or obj:IsA("Texture") then
-            obj.Transparency = 1
-        end
+    if obj:IsA("TextLabel") or obj:IsA("BillboardGui") or obj:IsA("Sound") or obj:IsA("ScreenGui") then
+        task.spawn(function()
+            obj:Destroy()
+        end)
     end
 
-    if settings.RemoveBillboards then
-        if obj:IsA("BillboardGui") then
-            obj.Enabled = false
-        end
-        if obj:IsA("TextLabel") and obj:FindFirstAncestorOfClass("BillboardGui") then
-            obj.Text = ""
-            obj.Visible = false
+    if obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
+        local p = obj.Parent
+        if p:IsA("ScreenGui") or p:IsA("BillboardGui") or p:IsA("Frame") or p:IsA("TextLabel") then
+            task.spawn(function()
+                obj:Destroy()
+            end)
         end
     end
 end
 
-local function setup_observer(path)
+local function mp(path)
     if not path then return end
-    path.DescendantAdded:Connect(clean_object)
-    for _, v in ipairs(path:GetDescendants()) do
-        clean_object(v)
-    end
+    path.DescendantAdded:Connect(kl)
 end
 
-task.spawn(function()
-    setup_observer(game.Workspace)
-    setup_observer(game.Players.LocalPlayer:WaitForChild("PlayerGui"))
-end)
-
-RunService.Heartbeat:Connect(function()
+mp(LocalPlayer.PlayerGui)
+LocalPlayer.CharacterAdded:Connect(mp)
+if LocalPlayer.Character then mp(LocalPlayer.Character) end
+game:GetService("RunService").RenderStepped:Connect(function()
     local data = char_info()
-    
-    if settings.Lagger and remotes.c then
+    if not data.CHAR or not data.ROOT then return end
+    if settings.Lagger then
         for count = 1, settings.LaggerStrength do
-            remotes.c:FireServer()
+            if not settings.Lagger then break end
+            Call:FireServer()
         end
     end
-    
-    if settings.SpeedBoost and data then
+    if settings.SpeedBoost then
         data.HUM.WalkSpeed = settings.SpeedBoostSpeed
     end
 end)
