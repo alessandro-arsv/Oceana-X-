@@ -5,6 +5,15 @@
 -- yes everything uses windUI
 -- this was pushed back i work on other things
 
+--[[ future new tabs: 
+    Combat
+    Auto Farm
+    ESP
+    Movement
+    World
+    Teleport
+]]
+
 repeat task.wait() until game:IsLoaded()
 
 local RunService = game:GetService("RunService")
@@ -23,7 +32,8 @@ local remotes = {
     RPI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestPlantItem"),
     SDI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("StopDraggingItem"),
     RSDI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"),
-    ROIC = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest")
+    ROIC = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest"),
+    RRP = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestRevivePlayer"),
 }
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
@@ -92,7 +102,11 @@ local settings = {
     OrbitRadius = 10,
     Walkspeed = 16,
     WalkspeedEnabled = false,
-    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest"},
+    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack"},
+    FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel"},
+    ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair"},
+    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle"}, -- adding more later
+    
 }
 -- SAPLINGS
 local SaplingsTab = Window:Tab({ 
@@ -177,7 +191,7 @@ ItemsTab:Button({
         if itemsFolder then
             allItems = itemsFolder:GetChildren()
         end
-        local flammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel"}
+        local flammableItems = settings.FlammableItems
         for _, item in ipairs(allItems) do
             local isFlammable = false
             for _, flammableName in ipairs(flammableItems) do
@@ -200,7 +214,7 @@ ItemsTab:Button({
         if itemsFolder then
             allItems = itemsFolder:GetChildren()
         end
-        local scrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine"}
+        local scrapItems = settings.ScrapItems
         for _, item in ipairs(allItems) do
             local isScrap = false
             for _, scrapName in ipairs(scrapItems) do
