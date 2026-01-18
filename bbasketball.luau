@@ -18,10 +18,17 @@ WindUI:AddTheme({
     Icon = Color3.fromHex("#a1a1aa"), 
 })
 
-local remotes = {
+local remotes = nil
+
+if game.PlaceId == 113463598817292 then
+     remotes = {
+    c =game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Call", 5)
+}
+else
+     remotes = {
     c = ReplicatedStorage:WaitForChild("Remotes", 5):WaitForChild("Call", 5)
 }
-
+end
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
     Icon = "door-open",
