@@ -11,6 +11,8 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+local itemsFolder = workspace:FindFirstChild("Items")
+local allItems = {}
 
 
 local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
@@ -23,7 +25,7 @@ local remotes = {
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
     Icon = "door-open",
-    Author = "by @s3curee",
+    Author = "by @s3curee and @twinnn",
     Folder = "Oceana",
     Transparent = true,
     Theme = "Dark",
@@ -82,7 +84,6 @@ local settings = {
     Plant = nil,
     OrbitSpeed = 5,
     OrbitRadius = 10,
-    BringAllItems = false
 }
 
 local SaplingsTab = Window:Tab({ 
@@ -136,17 +137,57 @@ local ItemsTab = Window:Tab({
     IconColor = Color3.fromHex("#ff8c00"),
     IconShape = "Square" 
 })
-ItemsTab:Toggle({
+ItemsTab:Button({
     Title = "Bring all items",
-    Value = false,
-    Callback = function(state) 
-        settings.BringAllItems = state
+    Callback = function() 
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        for _, item in ipairs(allItems) do
+            if item.Name ~= "^Item Chest" then
+                local args = { item }
+                game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"):FireServer(unpack(args))
+            task.wait(0.03)
+            if item:IsA("BasePart") then
+                item.CFrame = i.ROOT.CFrame + Vector3.new(0, 3, 0)
+            elseif item:IsA("Model") and item.PrimaryPart then
+                item:SetPrimaryPartCFrame(i.ROOT.CFrame + Vector3.new(0, 3, 0))
+            end
+        end
+    end
+end
+})
+ItemsTab:Button({
+    Title = "Bring all flammables",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local flammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister"}
+        for _, item in ipairs(allItems) do
+            local isFlammable = false
+            for _, flammableName in ipairs(flammableItems) do
+                if item.Name == flammableName then
+                    isFlammable = true
+                    break
+                end
+            end
+            if isFlammable then
+                local args = { item }
+                game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"):FireServer(unpack(args))
+                task.wait(0.03)
+                if item:IsA("BasePart") then
+                    item.CFrame = i.ROOT.CFrame + Vector3.new(0, 3, 0)
+                elseif item:IsA("Model") and item.PrimaryPart then
+                    item:SetPrimaryPartCFrame(i.ROOT.CFrame + Vector3.new(0, 3, 0))
+                end
+            end
+        end
     end
 })
-
-
-
-
+-- plant orbit
 local a = 0
 game:GetService("RunService").RenderStepped:Connect(function()
     local i = char_info()
@@ -158,10 +199,10 @@ game:GetService("RunService").RenderStepped:Connect(function()
     if settings.PlantOrbit and settings.Plant then
         local of = Vector3.new(
             math.cos(a) * settings.OrbitRadius,
-            math.sin(a) * settings.OrbitRadiu,
+            0,
             math.sin(a) * settings.OrbitRadius
         )
-    remotes.RPI:InvokeServer(settings.Plant,i.ROOT.Position + of)
+        remotes.RPI:InvokeServer(settings.Plant,i.ROOT.Position + of)
     end
 end)
 

@@ -1,0 +1,57 @@
+local args = {
+	game:GetService("Players").LocalPlayer:WaitForChild("Inventory"):WaitForChild("Old Sack"),
+	game:GetService("Players").LocalPlayer:WaitForChild("ItemBag"):WaitForChild("Log")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestBagStoreItem"):InvokeServer(unpack(args))
+
+
+local args = {
+	workspace:WaitForChild("Items"):WaitForChild("Carrot")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"):FireServer(unpack(args))
+
+
+local args = {
+	workspace:WaitForChild("Items"):WaitForChild("Item Chest5")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest"):FireServer(unpack(args))
+
+
+local args = {
+	"FireAllClients",
+	12,
+	{
+		ProjectileName = "Impact Grenade",
+		ProjectileGravity = 35,
+		Velocity = vector.create(54.38725280761719, 4.939592361450195, -58.460479736328125),
+		Origin = vector.create(-16.31972312927246, 4.368155002593994, -1.1500067710876465)
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ReplicateBullet"):FireServer(unpack(args))
+
+
+local args = {
+	Instance.new("Model", nil),
+	12
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RegisterProjectile"):InvokeServer(unpack(args))
+
+
+local args = {
+	vector.create(15.344391822814941, 0.9869060516357422, -35.18553924560547),
+	12
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("SplashProjectileExplode"):InvokeServer(unpack(args))
+
+
+local args = {
+	Instance.new("Model", nil),
+	vector.create(46.41654586791992, -0.012301921844482422, -60.917930603027344)
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestPlantItem"):InvokeServer(unpack(args))
+
+
+local args = {
+	Instance.new("Model", nil)
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestRevivePlayer"):FireServer(unpack(args))
