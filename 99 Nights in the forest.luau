@@ -84,6 +84,7 @@ local settings = {
     Plant = nil,
     OrbitSpeed = 5,
     OrbitRadius = 10,
+    walkspeed = 16,
 }
 
 local SaplingsTab = Window:Tab({ 
@@ -187,6 +188,34 @@ ItemsTab:Button({
         end
     end
 })
+
+local PlayerTab = Window:Tab({ 
+    Title = "Player",
+    Icon = "solar:flame-bold",
+    IconColor = Color3.fromHex("#ff8c00"),
+    IconShape = "Square" 
+})
+PlayerTab:Slider({
+    Title = "Walk Speed",
+    Step = 1,
+    Value = {
+        Min = 0,
+        Max = 250,
+        Default = 16,
+    },
+    Callback = function(value)
+        --[[ local i = char_info()
+        settings.walkspeed = value
+        if walkspeed == Value then
+            i.HUM.WalkSpeed = Value
+        end 
+        
+        ill fix this my seliware failed authientication -twinnn
+        
+        ]] 
+    end
+})
+
 -- plant orbit
 local a = 0
 game:GetService("RunService").RenderStepped:Connect(function()
