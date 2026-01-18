@@ -160,9 +160,19 @@ local function mp(path)
     path.DescendantAdded:Connect(kl)
 end
 
-mp(LocalPlayer.PlayerGui)
-LocalPlayer.CharacterAdded:Connect(mp)
-if LocalPlayer.Character then mp(LocalPlayer.Character) end
+for _,v in game.Players:GetPlayers() do
+    
+
+    mp(v.PlayerGui)
+v.CharacterAdded:Connect(mp)
+if v.Character then mp(v.Character) end
+end
+
+game.Players.PlayerAdded:Connect(function(plr)
+mp(plr.PlayerGui)
+plr.CharacterAdded:Connect(mp)
+if plr.Character then mp(plr.Character) end
+end)
 game:GetService("RunService").RenderStepped:Connect(function()
     local data = char_info()
     if not data.CHAR or not data.ROOT then return end
