@@ -68,3 +68,29 @@ local args = {
 	workspace:WaitForChild("Items"):WaitForChild("Old Radio")
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("StopDraggingItem"):FireServer(unpack(args))
+
+local args = {
+	"FireAllClients",
+	"TamedAnimal",
+	{
+		Instance = workspace:WaitForChild("Characters"):WaitForChild("Bunny"):WaitForChild("HumanoidRootPart"),
+		Volume = 0.4
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestReplicateSound"):FireServer(unpack(args))
+
+local args = {
+	Instance.new("Model", nil),
+	game:GetService("Players").LocalPlayer:WaitForChild("Inventory"):WaitForChild("Strong Axe"),
+	"15_4541817778",
+	CFrame.new(184.7486114501953, 1.1168023347854614, 378.6430358886719, -0.9999898076057434, -7.400566914839146e-08, -0.004515049047768116, -7.388393896690104e-08, 1, -2.7128610469162595e-08, 0.004515049047768116, -2.6794745977554157e-08, -0.9999898076057434)
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ToolDamageObject"):InvokeServer(unpack(args))
+
+local args = {
+	workspace:WaitForChild("Map"):WaitForChild("Foliage"):WaitForChild("Small Tree"),
+	game:GetService("Players").LocalPlayer:WaitForChild("Inventory"):WaitForChild("Old Axe"),
+	"3_4541817778",
+	CFrame.new(46.06697463989258, 3.9146077632904053, -42.62388610839844, 0.6295567154884338, 0, -0.7769545316696167, 0, 1, 0, 0.7769545316696167, 0, 0.6295567154884338)
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ToolDamageObject"):InvokeServer(unpack(args))

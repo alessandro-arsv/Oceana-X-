@@ -21,7 +21,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local itemsFolder = workspace:FindFirstChild("Items")
+local charactersFolder = workspace:WaitForChild("Characters")
 local allItems = {}
+local characters = {}
 
 
 local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
@@ -34,6 +36,7 @@ local remotes = {
     RSDI = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestStartDraggingItem"),
     ROIC = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest"),
     RRP = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestRevivePlayer"),
+    TDO = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ToolDamageObject"),
 }
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
@@ -80,7 +83,6 @@ function char_info()
 end
 
 function item_teleport(item)
-
     local args = { item }
     remotes.RSDI:FireServer(unpack(args))
     task.wait(0.03)
@@ -89,7 +91,6 @@ function item_teleport(item)
     elseif item:IsA("Model") and item.PrimaryPart then
         item:SetPrimaryPartCFrame(char_info().ROOT.CFrame + Vector3.new(0, 3, 0))
     end
-
     remotes.SDI:FireServer(unpack(args))
 end
 
@@ -102,11 +103,13 @@ local settings = {
     OrbitRadius = 10,
     Walkspeed = 16,
     WalkspeedEnabled = false,
+    KillAura = false,
+    KillAuraRange = 50,
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack"},
-    FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel"},
+    FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair"},
-    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle"}, -- adding more later
-    
+    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Old Axe", "Good Axe", "Spear"},
+    excludedCharacters = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"},
 }
 -- SAPLINGS
 local SaplingsTab = Window:Tab({ 
@@ -116,7 +119,7 @@ local SaplingsTab = Window:Tab({
     IconShape = "Square" 
 })
 SaplingsTab:Toggle({
-    Title = "Spam Plant",
+    Title = "Spam plant",
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
@@ -257,12 +260,11 @@ PlayerTab:Button({
 PlayerTab:Toggle({
     Title = "Walkspeed enabled",
     Type = "Toggle",
-    Value = false, -- default value
+    Value = false,
     Callback = function(state) 
         settings.WalkspeedEnabled = state
     end
 })
-
 PlayerTab:Slider({
     Title = "Walkspeed",
     Step = 1,
@@ -273,6 +275,33 @@ PlayerTab:Slider({
     },
     Callback = function(value)
         settings.Walkspeed = value
+    end
+})
+-- COMBAT TAB
+local CombatTab = Window:Tab({ 
+    Title = "Combat",
+    Icon = "sword",
+    IconColor = Color3.fromHex("#db1010"),
+    IconShape = "Square"
+})
+CombatTab:Toggle({
+    Title = "Kill Aura",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.KillAura = state
+    end
+})
+CombatTab:Slider({
+    Title = "Kill Aura Range",
+    Step = 1,
+    Value = {
+        Min = 5,
+        Max = 100,
+        Default = 50,
+    },
+    Callback = function(value)
+        settings.KillAuraRange = value
     end
 })
 
@@ -296,6 +325,38 @@ game:GetService("RunService").RenderStepped:Connect(function()
     if settings.WalkspeedEnabled then
         i.HUM.WalkSpeed = settings.Walkspeed
     end
+    local toolIdCounter = 15
+    if settings.KillAura then
+        if charactersFolder then
+            local playerInventory = i.LP:WaitForChild("Inventory")
+            local weapon = nil
+            for _, weaponName in ipairs(settings.Weapons) do 
+                weapon = playerInventory:FindFirstChild(weaponName)
+                if weapon then 
+                    break 
+                end
+            end
+            if weapon then
+                for _, character in ipairs(charactersFolder:GetChildren()) do
+                local isExcluded = false
+                for _, excludeName in ipairs(settings.excludedCharacters) do
+                    if character.Name == excludeName then
+                        isExcluded = true
+                        break
+                    end
+                end
+            if not isExcluded and character:FindFirstChild("HumanoidRootPart") then
+                local distance = (i.ROOT.Position - character.HumanoidRootPart.Position).Magnitude
+                if distance <= settings.KillAuraRange then
+                    toolIdCounter = toolIdCounter + 1
+                    local toolId = toolIdCounter .. "_" .. i.LP.UserId -- dont remove its for items cause i just thought if that was my player id and it was so yea dont remove alessndro plesae
+                    remotes.TDO:InvokeServer(character, weapon, toolId, character.HumanoidRootPart.CFrame)
+                    end
+                end
+            end
+        end
+    end
+end
 end)
 
 -- hook
