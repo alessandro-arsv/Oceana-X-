@@ -22,6 +22,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local itemsFolder = workspace:FindFirstChild("Items")
 local charactersFolder = workspace:WaitForChild("Characters")
+local FoliageFolder = workspace.Map:WaitForChild("Foliage")
 local allItems = {}
 local characters = {}
 
@@ -37,6 +38,8 @@ local remotes = {
     ROIC = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestOpenItemChest"),
     RRP = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestRevivePlayer"),
     TDO = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ToolDamageObject"),
+    UEIH = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("UnequipItemHandle"),
+    EIH = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("EquipItemHandle")
 }
 local Window = WindUI:CreateWindow({
     Title = "Oceana X",
@@ -104,10 +107,10 @@ local settings = {
     Walkspeed = 16,
     WalkspeedEnabled = false,
     KillAura = false,
-    KillAuraRange = 50,
-    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack"},
-    FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse"},
-    ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair"},
+    KillAuraRange = 100,
+    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest"},
+    FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
+    ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
     Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Old Axe", "Good Axe", "Spear"},
     excludedCharacters = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"},
 }
@@ -247,7 +250,7 @@ ItemsTab:Button({
 local PlayerTab = Window:Tab({ 
     Title = "Player",
     Icon = "user",
-    IconColor = Color3.fromRGB(20, 18, 150),
+    IconColor = Color3.fromRGB(43, 169, 251),
     IconShape = "Square" 
 })
 PlayerTab:Button({
@@ -286,6 +289,7 @@ local CombatTab = Window:Tab({
 })
 CombatTab:Toggle({
     Title = "Kill Aura",
+    Desc = "Warning: Axe only, can break with other weapons.",
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
@@ -296,17 +300,105 @@ CombatTab:Slider({
     Title = "Kill Aura Range",
     Step = 1,
     Value = {
-        Min = 5,
-        Max = 100,
-        Default = 50,
+        Min = 100,
+        Max = 1000,
+        Default = 100,
     },
     Callback = function(value)
         settings.KillAuraRange = value
     end
 })
-
--- plant orbit
+CombatTab:Toggle({
+    Title = "Chop Aura",
+    Desc = "Warning: Axe only, can break with other weapons.",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.Chopaura = state
+    end
+})
 local a = 0
+local toolIdCounter = 15
+-- kill aura
+task.spawn(function()
+    while task.wait() do
+        local i = char_info()
+        if not i.CHAR then return end
+        if settings.KillAura then
+            if charactersFolder then
+                local playerInventory = i.LP:WaitForChild("Inventory")
+                local weapon = nil
+                for _, weaponName in ipairs(settings.Weapons) do 
+                    weapon = playerInventory:FindFirstChild(weaponName)
+                    if weapon then 
+                        break 
+                    end
+                end
+                if weapon then
+                    for _, character in ipairs(charactersFolder:GetChildren()) do
+                        local isExcluded = false
+                        for _, excludeName in ipairs(settings.excludedCharacters) do
+                            if character.Name == excludeName then
+                                isExcluded = true
+                                continue
+                            end
+                        end
+                        if not isExcluded and character:FindFirstChild("HumanoidRootPart") then
+                            local distance = (i.ROOT.Position - character.HumanoidRootPart.Position).Magnitude
+                            if distance <= settings.KillAuraRange then
+                                remotes.EIH:FireServer("FireAllClients",weapon)
+                                toolIdCounter = toolIdCounter + 1
+                                local toolId = toolIdCounter .. "_" .. i.LP.UserId -- dont remove its for items cause i just thought if that was my player id and it was so yea dont remove alessndro plesae
+                                remotes.TDO:InvokeServer(character, weapon, toolId, character.HumanoidRootPart.CFrame)
+                                remotes.UEIH:FireServer("FireAllClients",weapon)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        -- chop aura (alessandro stole my kill aura and make it so it damages trees i
+        if settings.Chopaura then
+            if FoliageFolder then
+                local playerInventory = i.LP:WaitForChild("Inventory")
+                local weapon = nil
+                for _, weaponName in ipairs(settings.Weapons) do 
+                    weapon = playerInventory:FindFirstChild(weaponName)
+                    if weapon then 
+                        break 
+                    end
+                end
+                if weapon then
+                    for _, tree in FoliageFolder:GetChildren() do
+                        local isExcluded = false
+                        local tableoftrees = { 
+                            "Small Tree",
+                            "TreeBig1",
+                            "TreeBig2",
+                            "TreeBig3"
+                        }
+                        if not table.find(tableoftrees,tree.Name) then
+                            isExcluded = true
+                            continue
+                        end
+
+                        if not isExcluded and tree:FindFirstChild("Trunk") then
+                            local distance = (i.ROOT.Position - tree.Trunk.Position).Magnitude
+                            if distance <= settings.KillAuraRange then
+                                remotes.EIH:FireServer("FireAllClients",weapon)
+                                local toolId = toolIdCounter .. "5_" .. i.LP.UserId -- dont remove its for items cause i just thought if that was my player id and it was so yea dont remove alessndro plesae
+                                remotes.TDO:InvokeServer(tree, weapon, toolId, tree.Trunk.CFrame)
+                                remotes.UEIH:FireServer("FireAllClients",weapon)
+                            end
+                            
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+-- plant orbit
 game:GetService("RunService").RenderStepped:Connect(function()
     local i = char_info()
     if not i.CHAR then return end
@@ -325,38 +417,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
     if settings.WalkspeedEnabled then
         i.HUM.WalkSpeed = settings.Walkspeed
     end
-    local toolIdCounter = 15
-    if settings.KillAura then
-        if charactersFolder then
-            local playerInventory = i.LP:WaitForChild("Inventory")
-            local weapon = nil
-            for _, weaponName in ipairs(settings.Weapons) do 
-                weapon = playerInventory:FindFirstChild(weaponName)
-                if weapon then 
-                    break 
-                end
-            end
-            if weapon then
-                for _, character in ipairs(charactersFolder:GetChildren()) do
-                local isExcluded = false
-                for _, excludeName in ipairs(settings.excludedCharacters) do
-                    if character.Name == excludeName then
-                        isExcluded = true
-                        break
-                    end
-                end
-            if not isExcluded and character:FindFirstChild("HumanoidRootPart") then
-                local distance = (i.ROOT.Position - character.HumanoidRootPart.Position).Magnitude
-                if distance <= settings.KillAuraRange then
-                    toolIdCounter = toolIdCounter + 1
-                    local toolId = toolIdCounter .. "_" .. i.LP.UserId -- dont remove its for items cause i just thought if that was my player id and it was so yea dont remove alessndro plesae
-                    remotes.TDO:InvokeServer(character, weapon, toolId, character.HumanoidRootPart.CFrame)
-                    end
-                end
-            end
-        end
-    end
-end
 end)
 
 -- hook
