@@ -108,6 +108,7 @@ local settings = {
     WalkspeedEnabled = false,
     KillAura = false,
     KillAuraRange = 100,
+    ChopAuraRange = 10,
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
@@ -300,9 +301,9 @@ CombatTab:Slider({
     Title = "Kill Aura Range",
     Step = 1,
     Value = {
-        Min = 100,
-        Max = 1000,
-        Default = 100,
+        Min = 50,
+        Max = 200,
+        Default = 50,
     },
     Callback = function(value)
         settings.KillAuraRange = value
@@ -314,16 +315,44 @@ CombatTab:Toggle({
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
-        settings.Chopaura = state
+        settings.ChopAura = state
+    end
+})
+CombatTab:Slider({
+    Title = "Chop Aura Range",
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 100,
+        Default = 10,
+    },
+    Callback = function(value)
+        settings.ChopAuraRange = value
     end
 })
 local a = 0
-local toolIdCounter = 15
+local ClientModule = nil
+local function lf()
+    if not ClientModule then
+        local gc = getgc(true)
+        for i = 1, #gc do
+            local v = gc[i]
+            if type(v) == "table" then
+                if rawget(v, "EnemyHandler") and rawget(v, "Events") and rawget(v, "Databases") then
+                    ClientModule = v
+                    return true
+                end
+            end
+        end
+    end
+    return ClientModule ~= nil
+end
 -- kill aura
 task.spawn(function()
     while task.wait() do
         local i = char_info()
         if not i.CHAR then return end
+        if not lf() then continue end
         if settings.KillAura then
             if charactersFolder then
                 local playerInventory = i.LP:WaitForChild("Inventory")
@@ -334,7 +363,8 @@ task.spawn(function()
                         break 
                     end
                 end
-                if weapon then
+                if weapon then -- wrong variables btw so im fixing it cause you cant learn how to spell
+                    local resourceDamage = weapon:GetAttribute("WeaponResourceDamage") or 10
                     for _, character in ipairs(charactersFolder:GetChildren()) do
                         local isExcluded = false
                         for _, excludeName in ipairs(settings.excludedCharacters) do
@@ -347,9 +377,8 @@ task.spawn(function()
                             local distance = (i.ROOT.Position - character.HumanoidRootPart.Position).Magnitude
                             if distance <= settings.KillAuraRange then
                                 remotes.EIH:FireServer("FireAllClients",weapon)
-                                toolIdCounter = toolIdCounter + 1
-                                local toolId = toolIdCounter .. "_" .. i.LP.UserId -- dont remove its for items cause i just thought if that was my player id and it was so yea dont remove alessndro plesae
-                                remotes.TDO:InvokeServer(character, weapon, toolId, character.HumanoidRootPart.CFrame)
+                                local damageAmount, onDeathCallback = ClientModule.EnemyHandler.ApplyLocalDamage(character, resourceDamage)
+                                remotes.TDO:InvokeServer(character, weapon, damageAmount, character.HumanoidRootPart.CFrame)
                                 remotes.UEIH:FireServer("FireAllClients",weapon)
                             end
                         end
@@ -357,40 +386,45 @@ task.spawn(function()
                 end
             end
         end
-        -- chop aura (alessandro stole my kill aura and make it so it damages trees i
-        if settings.Chopaura then
-            if FoliageFolder then
-                local playerInventory = i.LP:WaitForChild("Inventory")
-                local weapon = nil
-                for _, weaponName in ipairs(settings.Weapons) do 
-                    weapon = playerInventory:FindFirstChild(weaponName)
-                    if weapon then 
-                        break 
-                    end
-                end
-                if weapon then
-                    for _, tree in FoliageFolder:GetChildren() do
-                        local isExcluded = false
-                        local tableoftrees = { 
-                            "Small Tree",
-                            "TreeBig1",
-                            "TreeBig2",
-                            "TreeBig3"
-                        }
-                        if not table.find(tableoftrees,tree.Name) then
-                            isExcluded = true
-                            continue
-                        end
+        -- chop aura (alessandro stole my kill aura and make it so it damages trees
+        if settings.ChopAura and FoliageFolder then
+            local Character = i.LP.Character
+            if not Character then return end
+            
+            local weapon = nil
+            for _, weaponName in ipairs(settings.Weapons) do 
+                weapon = Character:FindFirstChild(weaponName) or i.LP.Inventory:FindFirstChild(weaponName)
+                if weapon then break end
+            end
 
-                        if not isExcluded and tree:FindFirstChild("Trunk") then
-                            local distance = (i.ROOT.Position - tree.Trunk.Position).Magnitude
-                            if distance <= settings.KillAuraRange then
-                                remotes.EIH:FireServer("FireAllClients",weapon)
-                                local toolId = toolIdCounter .. "5_" .. i.LP.UserId -- dont remove its for items cause i just thought if that was my player id and it was so yea dont remove alessndro plesae
-                                remotes.TDO:InvokeServer(tree, weapon, toolId, tree.Trunk.CFrame)
-                                remotes.UEIH:FireServer("FireAllClients",weapon)
-                            end
+            if weapon then
+                local resourceDamage = weapon:GetAttribute("WeaponResourceDamage") or 10
+                local allowedTrees = { "Small Tree", "TreeBig1", "TreeBig2", "TreeBig3" }
+
+                for _, tree in ipairs(FoliageFolder:GetChildren()) do
+                    local trunk = tree:FindFirstChild("Trunk")
+                    if table.find(allowedTrees, tree.Name) and trunk then
+                        local distance = (i.ROOT.Position - trunk.Position).Magnitude
+                        
+                        if distance <= settings.ChopAuraRange then
+                            remotes.EIH:FireServer("FireAllClients", weapon) 
+
+                            local damageAmount, onDeathCallback = ClientModule.EnemyHandler.ApplyLocalDamage(tree, resourceDamage)
                             
+                            local response = remotes.TDO:InvokeServer(tree, weapon, damageAmount, i.ROOT.CFrame)
+                            
+                            if response then
+                                local hitRegisters = tree:FindFirstChild("HitRegisters")
+                                if hitRegisters then
+                                    local registeredHealth = ClientModule.EnemyHandler.GetLocalHealthRegistered(hitRegisters)
+                                    local currentHealth = tree:GetAttribute("Health") - registeredHealth
+                                    
+                                    if currentHealth <= 0 and tree.Parent ~= nil then
+                                        ClientModule.Events.DestroyObject:Fire(tree, i.ROOT.CFrame)
+                                    end
+                                end
+                            end
+                            remotes.UEIH:FireServer("FireAllClients", weapon)
                         end
                     end
                 end
