@@ -20,5 +20,5 @@ if pi == 126509999114328 then -- 99 nights
     loadstring(game:HttpGet(urls.nights))()
 end
 if pi == 111530421351096 then -- uhh you vs HOMER 
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet(urls.YouVSHomer))()
 end
