@@ -112,8 +112,14 @@ local settings = {
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
-    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Old Axe", "Good Axe", "Spear"},
+    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear"},
     excludedCharacters = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"},
+    Food = {"Morsel", "Steak", "Cooked Morsel", "Cooked Steak", "Cake", "Berry", "Carrot"},
+    sapling = {"Sapling"}, -- sapling
+    Heals = {"Bandage", "MedKit"},
+    Sacks = {"Good Sack", "Infernal Sack", "Giant Sack"},
+    Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour"},
+    explosives = {"Impact Grenade", "Dynamite"}
 }
 -- SAPLINGS
 local SaplingsTab = Window:Tab({ 
@@ -171,7 +177,7 @@ local ItemsTab = Window:Tab({
     IconShape = "Square" 
 })
 ItemsTab:Button({
-    Title = "Bring all items",
+    Title = "Bring all items (everything)",
     Callback = function() 
         local i = char_info()
         if itemsFolder then
@@ -186,6 +192,28 @@ ItemsTab:Button({
                 end
             end
             if not isExcluded then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all weapons",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local weaponItems = settings.Weapons
+        for _, item in ipairs(allItems) do
+            local isWeapon = false
+            for _, weaponName in ipairs(weaponItems) do
+                if item.Name == weaponName then
+                    isWeapon = true
+                    break
+                end
+            end
+            if isWeapon then
                 item_teleport(item)
             end
         end
@@ -231,6 +259,138 @@ ItemsTab:Button({
                 end
             end
             if isScrap then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all food",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local foodItems = settings.Food
+        for _, item in ipairs(allItems) do
+            local isFood = false
+            for _, foodName in ipairs(foodItems) do
+                if item.Name == foodName then
+                    isFood = true
+                    break
+                end
+            end
+            if isFood then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all saplings",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local saplingsItems = settings.sapling
+        for _, item in ipairs(allItems) do
+            local isSapling = false
+            for _, saplingName in ipairs(saplingsItems) do
+                if item.Name == saplingName then
+                    isSapling = true
+                    break
+                end
+            end
+            if isSapling then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all heals",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local healingItems = settings.Heals
+        for _, item in ipairs(allItems) do
+            local isHeals = false
+            for _, healsName in ipairs(healingItems) do
+                if item.Name == healsName then
+                    isHeals = true
+                    break
+                end
+            end
+            if isHeals then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all sacks",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local sackItems = settings.Sacks
+        for _, item in ipairs(allItems) do
+            local isSack = false
+            for _, sackName in ipairs(sackItems) do
+                if item.Name == sackName then
+                    isSack = true
+                    break
+                end
+            end
+            if isSack then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all armor/armour",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local armorItems = settings.Armor
+        for _, item in ipairs(allItems) do
+            local isArmor = false
+            for _, armorName in ipairs(armorItems) do
+                if item.Name == armorName then
+                    isArmor = true
+                    break
+                end
+            end
+            if isArmor then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all explosives",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local explosiveItems = settings.explosives
+        for _, item in ipairs(allItems) do
+            local isExplosive = false
+            for _, explosiveName in ipairs(explosiveItems) do
+                if item.Name == explosiveName then
+                    isExplosive = true
+                    break
+                end
+            end
+            if isExplosive then
                 item_teleport(item)
             end
         end
@@ -302,7 +462,7 @@ CombatTab:Slider({
     Step = 1,
     Value = {
         Min = 50,
-        Max = 200,
+        Max = 100,
         Default = 50,
     },
     Callback = function(value)
@@ -363,7 +523,7 @@ task.spawn(function()
                         break 
                     end
                 end
-                if weapon then -- wrong variables btw so im fixing it cause you cant learn how to spell
+                if weapon then
                     local resourceDamage = weapon:GetAttribute("WeaponResourceDamage") or 10
                     for _, character in ipairs(charactersFolder:GetChildren()) do
                         local isExcluded = false
