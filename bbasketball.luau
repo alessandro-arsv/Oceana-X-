@@ -175,7 +175,7 @@ end
 mp(LocalPlayer.PlayerGui)
 LocalPlayer.CharacterAdded:Connect(mp)
 if LocalPlayer.Character then mp(LocalPlayer.Character) end
-for _,v in game.Players do
+for _,v in game.Players:GetPlayers() do
     v.CharacterAdded:Connect(mp)
     if v.Character then mp(v.Character) end
 end
