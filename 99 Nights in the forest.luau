@@ -470,7 +470,7 @@ CombatTab:Slider({
     end
 })
 CombatTab:Toggle({
-    Title = "Chop Aura",
+    Title = "Chop Aura (breaks most of the time)",
     Desc = "Warning: Axe only, can break with other weapons.",
     Type = "Toggle",
     Value = false,
