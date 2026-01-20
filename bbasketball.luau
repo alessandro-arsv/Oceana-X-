@@ -147,6 +147,11 @@ local function kl(obj)
     if obj:FindFirstAncestor("WindUI") then return end
 
     if obj:IsA("TextLabel") or obj:IsA("BillboardGui") or obj:IsA("Sound") or obj:IsA("ScreenGui") then
+        if obj:IsA("TextLabel") then
+            if obj:IsA("TextLabel").Text == "Pass" then
+                obj:Destroy()
+            end
+        end
         task.spawn(function()
             obj:Destroy()
         end)
@@ -170,6 +175,10 @@ end
 mp(LocalPlayer.PlayerGui)
 LocalPlayer.CharacterAdded:Connect(mp)
 if LocalPlayer.Character then mp(LocalPlayer.Character) end
+for _,v in game.Players do
+    v.CharacterAdded:Connect(mp)
+    if v.Character then mp(v.Character) end
+end
 game:GetService("RunService").RenderStepped:Connect(function()
     local data = char_info()
     if not data.CHAR or not data.ROOT then return end
