@@ -6,8 +6,6 @@
 -- this was pushed back i work on other things
 
 --[[ future new tabs: 
-    Combat
-    Auto Farm
     ESP
     Movement
     World
@@ -109,6 +107,7 @@ local settings = {
     KillAura = false,
     KillAuraRange = 100,
     ChopAuraRange = 10,
+    AntiAFKEnabled = false,
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
@@ -119,9 +118,11 @@ local settings = {
     Heals = {"Bandage", "MedKit"},
     Sacks = {"Good Sack", "Infernal Sack", "Giant Sack"},
     Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour"},
-    explosives = {"Impact Grenade", "Dynamite"}
+    explosives = {"Impact Grenade", "Dynamite"},
+    weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe"},
+    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
 }
--- SAPLINGS
+-- SAPLINGS TAB
 local SaplingsTab = Window:Tab({ 
     Title = "Saplings",
     Icon = "leafy-green",
@@ -241,7 +242,6 @@ ItemsTab:Button({
         end
     end
 })
-
 ItemsTab:Button({
     Title = "Bring all scrap",
     Callback = function()
@@ -416,9 +416,17 @@ local PlayerTab = Window:Tab({
 })
 PlayerTab:Button({
     Title = "God Mode",
-    Desc = "use again if you put on armor or eat food",
+    Desc = "use again if you eat something that deals damage or gives health. (like raw food)",
     Callback = function() 
         game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer"):FireServer(-math.huge)
+    end
+})
+PlayerTab:Toggle({
+    Title = "Anti-AFK",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state)
+        settings.AntiAFKEnabled = state
     end
 })
 PlayerTab:Toggle({
@@ -441,6 +449,7 @@ PlayerTab:Slider({
         settings.Walkspeed = value
     end
 })
+
 -- COMBAT TAB
 local CombatTab = Window:Tab({ 
     Title = "Combat",
@@ -450,7 +459,7 @@ local CombatTab = Window:Tab({
 })
 CombatTab:Toggle({
     Title = "Kill Aura",
-    Desc = "Warning: Axe only, can break with other weapons.",
+    Desc = "Warning: Melee weapons only (hold out weapon to actually do kill aura)",
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
@@ -470,8 +479,8 @@ CombatTab:Slider({
     end
 })
 CombatTab:Toggle({
-    Title = "Chop Aura (breaks most of the time)",
-    Desc = "Warning: Axe only, can break with other weapons.",
+    Title = "Chop Aura",
+    Desc = "Warning: Axe only. (hold out axe to actually do chop aura)",
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
@@ -482,7 +491,7 @@ CombatTab:Slider({
     Title = "Chop Aura Range",
     Step = 1,
     Value = {
-        Min = 1,
+        Min = 10,
         Max = 100,
         Default = 10,
     },
@@ -490,6 +499,13 @@ CombatTab:Slider({
         settings.ChopAuraRange = value
     end
 })
+local ESPTab = Window:Tab({ -- i add the stuff later
+    Title = "ESP",
+    Icon = "eye",
+    IconColor = Color3.fromHex("#00d4ff"),
+    IconShape = "Square" 
+})
+
 local a = 0
 local ClientModule = nil
 local function lf()
@@ -517,7 +533,8 @@ task.spawn(function()
             if charactersFolder then
                 local playerInventory = i.LP:WaitForChild("Inventory")
                 local weapon = nil
-                for _, weaponName in ipairs(settings.Weapons) do 
+                for idx = #settings.MeleeOnlyWeapons, 1, -1 do 
+                    local weaponName = settings.MeleeOnlyWeapons[idx]
                     weapon = playerInventory:FindFirstChild(weaponName)
                     if weapon then 
                         break 
@@ -530,61 +547,51 @@ task.spawn(function()
                         for _, excludeName in ipairs(settings.excludedCharacters) do
                             if character.Name == excludeName then
                                 isExcluded = true
-                                continue
+                                break
                             end
                         end
                         if not isExcluded and character:FindFirstChild("HumanoidRootPart") then
                             local distance = (i.ROOT.Position - character.HumanoidRootPart.Position).Magnitude
                             if distance <= settings.KillAuraRange then
-                                remotes.EIH:FireServer("FireAllClients",weapon)
-                                local damageAmount, onDeathCallback = ClientModule.EnemyHandler.ApplyLocalDamage(character, resourceDamage)
-                                remotes.TDO:InvokeServer(character, weapon, damageAmount, character.HumanoidRootPart.CFrame)
-                                remotes.UEIH:FireServer("FireAllClients",weapon)
+                                remotes.EIH:FireServer(weapon)
+                                remotes.TDO:InvokeServer(character, weapon, resourceDamage, character.HumanoidRootPart.CFrame)
+                                remotes.UEIH:FireServer(weapon)
                             end
                         end
                     end
                 end
             end
         end
-        -- chop aura (alessandro stole my kill aura and make it so it damages trees
+        -- chop aura
         if settings.ChopAura and FoliageFolder then
             local Character = i.LP.Character
             if not Character then return end
-            
             local weapon = nil
-            for _, weaponName in ipairs(settings.Weapons) do 
+            for _, weaponName in ipairs(settings.weaponaxesithink) do 
                 weapon = Character:FindFirstChild(weaponName) or i.LP.Inventory:FindFirstChild(weaponName)
                 if weapon then break end
             end
-
             if weapon then
                 local resourceDamage = weapon:GetAttribute("WeaponResourceDamage") or 10
-                local allowedTrees = { "Small Tree", "TreeBig1", "TreeBig2", "TreeBig3" }
-
+                local allowedTrees = {"Small Tree", "TreeBig1", "TreeBig2", "TreeBig3"}
                 for _, tree in ipairs(FoliageFolder:GetChildren()) do
                     local trunk = tree:FindFirstChild("Trunk")
                     if table.find(allowedTrees, tree.Name) and trunk then
                         local distance = (i.ROOT.Position - trunk.Position).Magnitude
-                        
                         if distance <= settings.ChopAuraRange then
-                            remotes.EIH:FireServer("FireAllClients", weapon) 
-
-                            local damageAmount, onDeathCallback = ClientModule.EnemyHandler.ApplyLocalDamage(tree, resourceDamage)
-                            
-                            local response = remotes.TDO:InvokeServer(tree, weapon, damageAmount, i.ROOT.CFrame)
-                            
+                            remotes.EIH:FireServer(weapon)
+                            local response = remotes.TDO:InvokeServer(tree, weapon, resourceDamage, i.ROOT.CFrame)
                             if response then
                                 local hitRegisters = tree:FindFirstChild("HitRegisters")
                                 if hitRegisters then
                                     local registeredHealth = ClientModule.EnemyHandler.GetLocalHealthRegistered(hitRegisters)
                                     local currentHealth = tree:GetAttribute("Health") - registeredHealth
-                                    
                                     if currentHealth <= 0 and tree.Parent ~= nil then
                                         ClientModule.Events.DestroyObject:Fire(tree, i.ROOT.CFrame)
                                     end
                                 end
                             end
-                            remotes.UEIH:FireServer("FireAllClients", weapon)
+                            remotes.UEIH:FireServer(weapon)
                         end
                     end
                 end
@@ -592,8 +599,20 @@ task.spawn(function()
         end
     end
 end)
+-- anti afk
+RunService.RenderStepped:Connect(function()
+    if settings.AntiAFKEnabled then
+        for _, v in pairs(getconnections(game:GetService("Players").LocalPlayer.Idled)) do
+            v:Disable()
+        end
+    else
+        for _, v in pairs(getconnections(game:GetService("Players").LocalPlayer.Idled)) do
+            v:Enable()
+        end
+    end
+end)
 -- plant orbit
-game:GetService("RunService").RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(function()
     local i = char_info()
     if not i.CHAR then return end
     a = a + math.rad(settings.OrbitSpeed)
@@ -612,7 +631,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
         i.HUM.WalkSpeed = settings.Walkspeed
     end
 end)
-
 -- hook
 local old;
 old = hookmetamethod(game, "__namecall", function(self, ...)

@@ -114,7 +114,7 @@ LagTab:Slider({
     Value = {
         Min = 20,
         Max = 100,
-        Default = 10,
+        Default = 20,
     },
     Callback = function(value)
         settings.LaggerStrength = value
@@ -134,7 +134,7 @@ PlayerTab:Slider({
     Value = {
         Min = 20,
         Max = 100,
-        Default = 10,
+        Default = 20,
     },
     Callback = function(value)
         settings.SpeedBoostSpeed = value

@@ -190,7 +190,7 @@ RunService.RenderStepped:Connect(function()
     if settings.KillAll then
         if game.Players.LocalPlayer.Team == "Homer" then -- this is mine & was sent to onion owner to use(dont think they use it)
             for _,v in game.Players:GetPlayers() do
-                if v == game.Players.LocalPlayer or v.Team ~= "Bart" or game.LocalPLayer.Team ~= "Homer" or v:FindFirstChild("HumanoidRootPart").TouchInterest == nil then continue end
+                if v == game.Players.LocalPlayer or v.Team ~= "Bart" or game.LocalPlayer.Team ~= "Homer" or v:FindFirstChild("HumanoidRootPart").TouchInterest == nil then continue end
                 if firetouchinterest then
                     local i = v.Character:FindFirstChild("HumanoidRootPart").TouchInterest
                     firetouchinterest(i,i.ROOT,0)
@@ -204,7 +204,7 @@ RunService.RenderStepped:Connect(function()
     if settings.AutoFarm then 
         if game.Players.LocalPlayer.Team == "Homer" then -- yea
             for _,v in game.Players:GetPlayers() do
-                if v == game.Players.LocalPlayer or v.Team ~= "Bart" or game.LocalPLayer.Team ~= "Homer" or v:FindFirstChild("HumanoidRootPart").TouchInterest == nil then continue end
+                if v == game.Players.LocalPlayer or v.Team ~= "Bart" or game.LocalPlayer.Team ~= "Homer" or v:FindFirstChild("HumanoidRootPart").TouchInterest == nil then continue end
                 if firetouchinterest then
                     local i = v.Character:FindFirstChild("HumanoidRootPart").TouchInterest
                     firetouchinterest(i, i.ROOT,0)
