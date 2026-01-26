@@ -118,7 +118,7 @@ local settings = {
     ChildTracers = false,
     CampfireName = false,
     CampfireTracers = false,
-    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate"},
+    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
     Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear"},
@@ -131,6 +131,7 @@ local settings = {
     explosives = {"Impact Grenade", "Dynamite"},
     weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe"},
     MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
+    LightSources = {"Old Flashlight", "Strong Flashlight"},
 }
 -- SAPLINGS TAB
 local SaplingsTab = Window:Tab({ 
@@ -225,6 +226,28 @@ ItemsTab:Button({
                 end
             end
             if isWeapon then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all light sources",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local lightSourceItems = settings.LightSources
+        for _, item in ipairs(allItems) do
+            local isLightSource = false
+            for _, lightSourceName in ipairs(lightSourceItems) do
+                if item.Name == lightSourceName then
+                    isLightSource = true
+                    break
+                end
+            end
+            if isLightSource then
                 item_teleport(item)
             end
         end
@@ -427,8 +450,16 @@ local PlayerTab = Window:Tab({
 PlayerTab:Button({
     Title = "God Mode",
     Desc = "use again if you eat something that deals damage or gives health. (like raw food)",
+    Callback = function()
+        remotes.DMG:FireServer(-math.huge)
+    end
+})
+PlayerTab:Button({
+    Title = "Ping current position (you)",
     Callback = function() 
-        game.ReplicatedStorage.RemoteEvents:FindFirstChild("DamagePlayer"):FireServer(-math.huge)
+        local i = char_info()
+        local args = {i.ROOT.Position}
+        remotes.RBP:FireServer(unpack(args))
     end
 })
 PlayerTab:Toggle({
