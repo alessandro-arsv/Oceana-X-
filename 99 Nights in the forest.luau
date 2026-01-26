@@ -17,6 +17,7 @@ repeat task.wait() until game:IsLoaded()
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local itemsFolder = workspace:FindFirstChild("Items")
 local charactersFolder = workspace:WaitForChild("Characters")
@@ -557,7 +558,7 @@ ESPTab:Toggle({
     end
 })
 ESPTab:Toggle({
-    Title = "Animal/Character Names",
+    Title = "Animal/Enemy Names",
     Type = "Toggle",
     Value = false,
     Callback = function(state)
@@ -565,7 +566,7 @@ ESPTab:Toggle({
     end
 })
 ESPTab:Toggle({
-    Title = "Animal/Character Tracers",
+    Title = "Animal/Enemy Tracers",
     Type = "Toggle",
     Value = false,
     Callback = function(state)
@@ -622,7 +623,7 @@ ESPTab:Toggle({
 })
 
 -- SETTINGS
-local Settings = Window:Tab({
+local SettingsTab = Window:Tab({
     Title = "Settings",
     Icon = "settings",
     IconColor = Color3.fromHex("#757575"),
