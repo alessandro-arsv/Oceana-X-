@@ -454,14 +454,6 @@ PlayerTab:Button({
         remotes.DMG:FireServer(-math.huge)
     end
 })
-PlayerTab:Button({
-    Title = "Ping current position (you)",
-    Callback = function() 
-        local i = char_info()
-        local args = {i.ROOT.Position}
-        remotes.RBP:FireServer(unpack(args))
-    end
-})
 PlayerTab:Toggle({
     Title = "Anti-AFK",
     Type = "Toggle",

@@ -94,3 +94,11 @@ local args = {
 	CFrame.new(46.06697463989258, 3.9146077632904053, -42.62388610839844, 0.6295567154884338, 0, -0.7769545316696167, 0, 1, 0, 0.7769545316696167, 0, 0.6295567154884338)
 }
 game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ToolDamageObject"):InvokeServer(unpack(args))
+
+local args = {
+	{
+		Position = vector.create(2.9576988220214844, 0.982353687286377, 52.43315124511719),
+		Player = game:GetService("Players"):WaitForChild("")
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestBroadcastPing"):FireServer(unpack(args))
