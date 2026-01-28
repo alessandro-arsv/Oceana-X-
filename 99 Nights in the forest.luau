@@ -9,7 +9,6 @@
     ESP
     Movement
     World
-    Teleport
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -22,6 +21,7 @@ local LocalPlayer = Players.LocalPlayer
 local itemsFolder = workspace:FindFirstChild("Items")
 local charactersFolder = workspace:WaitForChild("Characters")
 local FoliageFolder = workspace.Map:WaitForChild("Foliage")
+local TweenService = game:GetService("TweenService")
 local allItems = {}
 local characters = {}
 
@@ -58,7 +58,12 @@ local Window = WindUI:CreateWindow({
         end,
     },
 })
-
+local uiVersion = "v1.0.0"
+Window:Tag({
+    Title = uiVersion,
+    Icon = "github",
+    Color = Color3.fromHex("006eff"),
+})
 Window:EditOpenButton({
     Title = "Oceana X",
     Icon = "monitor",
@@ -84,7 +89,6 @@ function char_info()
         LP = LocalPlayer,
     }
 end
-
 function item_teleport(item)
     local args = { item }
     remotes.RSDI:FireServer(unpack(args))
@@ -96,7 +100,17 @@ function item_teleport(item)
     end
     remotes.SDI:FireServer(unpack(args))
 end
-
+function teleport_to_cframe(targetCF)
+    local i = char_info()
+    if not i or not i.ROOT then return end
+    if settings.UseTween then
+        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear)
+        local tween = TweenService:Create(i.ROOT, tweenInfo, { CFrame = targetCF })
+        tween:Play()
+    elseif settings.BasicTeleport then
+        i.ROOT.CFrame = targetCF
+    end 
+end
 local settings = {
     SpamPlant = false,
     PlantOrbit = false,
@@ -119,6 +133,8 @@ local settings = {
     ChildTracers = false,
     CampfireName = false,
     CampfireTracers = false,
+    UseTween = true,
+    BasicTeleport = false,
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
@@ -138,7 +154,7 @@ local settings = {
 local SaplingsTab = Window:Tab({ 
     Title = "Saplings",
     Icon = "leafy-green",
-    IconColor = Color3.fromHex("#2bfb35"),
+    IconColor = Color3.fromHex("#2b85fb"),
     IconShape = "Square" 
 })
 SaplingsTab:Toggle({
@@ -459,8 +475,18 @@ PlayerTab:Toggle({
     Title = "Anti-AFK",
     Type = "Toggle",
     Value = false,
-    Callback = function(state)
-        settings.AntiAFKEnabled = state
+    Callback = function()
+        RunService.RenderStepped:Connect(function()
+            if settings.AntiAFKEnabled then
+                for _, v in pairs(getconnections(game:GetService("Players").LocalPlayer.Idled)) do
+                    v:Disable()
+                end
+            else
+                for _, v in pairs(getconnections(game:GetService("Players").LocalPlayer.Idled)) do
+                    v:Enable()
+                end
+            end
+        end)
     end
 })
 PlayerTab:Toggle({
@@ -535,7 +561,7 @@ CombatTab:Slider({
 })
 
 -- ESP TAB
-local ESPTab = Window:Tab({ -- i add the stuff later
+local ESPTab = Window:Tab({
     Title = "ESP",
     Icon = "eye",
     IconColor = Color3.fromHex("#00d4ff"),
@@ -622,12 +648,47 @@ ESPTab:Toggle({
     end
 })
 
+-- MOVEMENT TAB
+local MovementTab = Window:Tab({ -- i do later
+    Title = "Movement",
+    Icon = "fast-forward",
+    IconColor = Color3.fromHex("#5900ff"),
+    IconShape = "Square" 
+})
+
 -- SETTINGS
 local SettingsTab = Window:Tab({
     Title = "Settings",
     Icon = "settings",
     IconColor = Color3.fromHex("#757575"),
     IconShape = "Square" 
+})
+SettingsTab:Keybind({
+    Title = "Toggle Keybind",
+    Desc = "Change the keybind to open/close the UI",
+    Value = Enum.KeyCode.RightControl,
+    Callback = function(key)
+        Window:SetToggleKey(Enum.KeyCode[key])
+    end
+})
+SettingsTab:Space()
+SettingsTab:Toggle({
+    Title = "Movement: Use tween",
+    Type = "Toggle",
+    Value = true,
+    Callback = function(value)
+        OceanaXConfig:Register("UseTween", value)
+        settings.UseTween = value
+    end
+})
+SettingsTab:Toggle({
+    Title = "Movement: Basic teleportation",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(value)
+        OceanaXConfig:Register("BasicTeleport", value)
+        settings.BasicTeleport = value
+    end
 })
 
 local a = 0
@@ -720,18 +781,6 @@ task.spawn(function()
                     end
                 end
             end
-        end
-    end
-end)
--- anti afk
-RunService.RenderStepped:Connect(function()
-    if settings.AntiAFKEnabled then
-        for _, v in pairs(getconnections(game:GetService("Players").LocalPlayer.Idled)) do
-            v:Disable()
-        end
-    else
-        for _, v in pairs(getconnections(game:GetService("Players").LocalPlayer.Idled)) do
-            v:Enable()
         end
     end
 end)
