@@ -677,7 +677,6 @@ SettingsTab:Toggle({
     Type = "Toggle",
     Value = true,
     Callback = function(value)
-        OceanaXConfig:Register("UseTween", value)
         settings.UseTween = value
     end
 })
@@ -686,7 +685,6 @@ SettingsTab:Toggle({
     Type = "Toggle",
     Value = false,
     Callback = function(value)
-        OceanaXConfig:Register("BasicTeleport", value)
         settings.BasicTeleport = value
     end
 })
