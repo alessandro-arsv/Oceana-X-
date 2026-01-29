@@ -12,7 +12,9 @@ local urls = {
     basketballbrain = "https://raw.githubusercontent.com/alessandro-arsv/Oceana-X-/refs/heads/main/bbasketball.luau",
     YouVSHomer = "https://raw.githubusercontent.com/alessandro-arsv/Oceana-X-/refs/heads/main/YouVSHomer.luau",
     GetRich = "https://raw.githubusercontent.com/alessandro-arsv/Oceana-X-/refs/heads/main/GetRich.luau",
-    MYFBT = "https://raw.githubusercontent.com/alessandro-arsv/Oceana-X-/refs/heads/main/MyFishingBrainrots.luau"
+    MYFBT = "https://raw.githubusercontent.com/alessandro-arsv/Oceana-X-/refs/heads/main/MyFishingBrainrots.luau",
+    ETFBS = "https://raw.githubusercontent.com/alessandro-arsv/Oceana-X-/refs/heads/main/EscapeTsunamiForBrainrots.luau"
+
 }
 if pi == 121765167512457 or pi == 113463598817292 then -- Brainrotted BASKETBALL
     loadstring(game:HttpGet(urls.basketballbrain))()
@@ -31,4 +33,7 @@ end
 if pi == 113489516847696 then -- my fishing brainrots
     loadstring(game:HttpGet(urls.MYFBT))()
     
+end
+if pi == 131623223084840 then
+    loadstring(game:HttpGet(urls.ETFBS))
 end
