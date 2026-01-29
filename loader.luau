@@ -34,6 +34,6 @@ if pi == 113489516847696 then -- my fishing brainrots
     loadstring(game:HttpGet(urls.MYFBT))()
     
 end
-if pi == 131623223084840 then
+if pi == 131623223084840 then -- escape tsunami for brianrots
     loadstring(game:HttpGet(urls.ETFBS))
 end
