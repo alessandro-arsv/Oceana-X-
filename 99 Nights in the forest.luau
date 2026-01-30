@@ -596,7 +596,7 @@ CombatTab:Slider({
 
 -- AUTOFARM TAB
 local AutoFarmTab = Window:Tab({ -- later cause i feel like it
-    Title = "Autofarm",
+    Title = "Auto Farm", -- still didn't add anything btw
     Icon = "lucide:wheat",
     IconColor = Color3.fromHex("#b47016"),
     IconShape = "Square"
