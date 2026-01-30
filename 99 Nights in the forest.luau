@@ -100,17 +100,6 @@ function item_teleport(item)
     end
     remotes.SDI:FireServer(unpack(args))
 end
-function teleport_to_cframe(targetCF)
-    local i = char_info()
-    if not i or not i.ROOT then return end
-    if settings.UseTween then
-        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear)
-        local tween = TweenService:Create(i.ROOT, tweenInfo, { CFrame = targetCF })
-        tween:Play()
-    elseif settings.BasicTeleport then
-        i.ROOT.CFrame = targetCF
-    end 
-end
 local settings = {
     SpamPlant = false,
     PlantOrbit = false,
@@ -135,6 +124,7 @@ local settings = {
     CampfireTracers = false,
     UseTween = true,
     BasicTeleport = false,
+    TeleportToCursor = false,
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
@@ -150,6 +140,50 @@ local settings = {
     MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
     LightSources = {"Old Flashlight", "Strong Flashlight"},
 }
+function teleport_to(targetCF)
+    local i = char_info()
+    if not i or not i.ROOT or not i.CHAR then return end
+    local targetPos
+    local t = typeof(targetCF)
+    if t == "CFrame" then
+        targetPos = targetCF.Position
+    elseif t == "Vector3" then
+        targetPos = targetCF
+    elseif  t == "Instance" then
+        if targetCF:IsA("BasePart") then
+            targetPos = targetCF.Position
+        elseif targetCF:IsA("Model") and targetCF.PrimaryPart then
+            targetPos = targetCF.PrimaryPart.Position
+        else
+            return
+        end
+    else
+        return
+    end
+    local rp = RaycastParams.new()
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.FilterDescendantsInstances = {i.CHAR}
+    local origin = targetPos + Vector3.new(0, 50, 0)
+    local hit = workspace:Raycast(origin, Vector3.new(0, -200, 0), rp)
+    local actualPos = hit and (hit.Position + Vector3.new(0, 3, 0)) or targetPos
+    local _, yaw = i.ROOT.CFrame:ToEulerAnglesYXZ()
+    local actualCF = CFrame.new(actualPos) * CFrame.Angles(0, yaw, 0)
+    i.ROOT.Anchored = false
+    if settings.UseTween then
+        local dist = (i.ROOT.Position - actualPos).Magnitude
+        local duration = math.clamp(dist / 200, 0.15, 2)
+        local oldCollide = i.ROOT.CanCollide
+        i.ROOT.CanCollide = false
+        local tween = TweenService:Create(i.ROOT, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = actualCF})
+        tween:Play()
+        tween.Completed:Connect(function()
+            i.ROOT.CanCollide = oldCollide
+        end)
+    else
+        i.CHAR:PivotTo(actualCF)
+    end
+end
+
 -- SAPLINGS TAB
 local SaplingsTab = Window:Tab({ 
     Title = "Saplings",
@@ -560,6 +594,14 @@ CombatTab:Slider({
     end
 })
 
+-- AUTOFARM TAB
+local AutoFarmTab = Window:Tab({ -- later cause i feel like it
+    Title = "Autofarm",
+    Icon = "lucide:wheat",
+    IconColor = Color3.fromHex("#b47016"),
+    IconShape = "Square"
+})
+
 -- ESP TAB
 local ESPTab = Window:Tab({
     Title = "ESP",
@@ -649,11 +691,45 @@ ESPTab:Toggle({
 })
 
 -- MOVEMENT TAB
-local MovementTab = Window:Tab({ -- i do later
+local MovementTab = Window:Tab({
     Title = "Movement",
     Icon = "fast-forward",
     IconColor = Color3.fromHex("#5900ff"),
     IconShape = "Square" 
+})
+MovementTab:Toggle({
+    Title = "Teleport to cursor",
+    Desc = "teleports on click",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state)
+        local tpcon
+        if tpcon then
+            tpcon:Disconnect()
+            tpcon = nil
+        end
+        settings.TeleportToCursor = state
+        if not state then
+            return
+        end
+        local i = char_info()
+        if not i or not i.CHAR then return end
+        local mouse = i.LP:GetMouse()
+        tpcon = mouse.Button1Down:Connect(function()
+            if not settings.TeleportToCursor then return end
+            local hit = mouse.Hit
+            if hit then
+                teleport_to(hit)
+            end
+        end)
+    end
+})
+MovementTab:Button({
+    Title = "Teleport to campfire",
+    Callback = function()
+        local campfireInner = workspace.Map.Campground.MainFire.InnerTouchZone
+        teleport_to(campfireInner.CFrame)
+    end
 })
 
 -- SETTINGS
@@ -676,17 +752,22 @@ SettingsTab:Toggle({
     Title = "Movement: Use tween",
     Type = "Toggle",
     Value = true,
-    Callback = function(value)
-        settings.UseTween = value
+    Callback = function(state)
+        settings.UseTween = state
     end
 })
+SettingsTab:Divider()
 SettingsTab:Toggle({
     Title = "Movement: Basic teleportation",
     Type = "Toggle",
     Value = false,
-    Callback = function(value)
-        settings.BasicTeleport = value
+    Callback = function(state)
+        settings.BasicTeleport = state
     end
+})
+SettingsTab:Divider()
+SettingsTab:Paragraph({
+    Title = "Movement: If both toggles are disabled then defaulted to basic teleportation."
 })
 
 local a = 0
