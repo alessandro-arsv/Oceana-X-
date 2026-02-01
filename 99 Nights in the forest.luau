@@ -125,19 +125,19 @@ local settings = {
     UseTween = true,
     BasicTeleport = false,
     TeleportToCursor = false,
-    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2"},
+    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2", "Corrupted Chest"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
-    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear"},
+    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear", "Bouncing Blade", "Corrupted Shotgun", "Corrupted Revolver", "Corrupted Thrown Axe", "Infernal Sword", "Crossbow"},
     excludedCharacters = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"},
     Food = {"Morsel", "Steak", "Cooked Morsel", "Cooked Steak", "Cake", "Berry", "Carrot", "Cooked Ribs", "MRE"},
     sapling = {"Sapling"}, -- sapling
     Heals = {"Bandage", "MedKit"},
     Sacks = {"Good Sack", "Infernal Sack", "Giant Sack"},
-    Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour"},
+    Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour", "Corrupted Thorn Body"},
     explosives = {"Impact Grenade", "Dynamite"},
     weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe"},
-    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
+    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar", "Corrupted Axe"}, -- not adding scythe cause its annoying
     LightSources = {"Old Flashlight", "Strong Flashlight"},
 }
 function teleport_to(targetCF)
@@ -553,7 +553,7 @@ local CombatTab = Window:Tab({
 })
 CombatTab:Toggle({
     Title = "Kill Aura",
-    Desc = "Warning: Melee weapons only (hold out weapon to actually do kill aura)",
+    Desc = "Warning: Melee weapons only (hold out strongest weapon to actually do kill aura)",
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
@@ -837,7 +837,7 @@ task.spawn(function()
             end
             if weapon then
                 local resourceDamage = weapon:GetAttribute("WeaponResourceDamage") or 10
-                local allowedTrees = {"Small Tree", "TreeBig1", "TreeBig2", "TreeBig3"}
+                local allowedTrees = {"Small Tree", "TreeBig1", "TreeBig2", "TreeBig3", "Corrupted Small Tree", "Corrupted TreeBig1", "Corrupted TreeBig2", "Corrupted TreeBig3"}
                 for _, tree in ipairs(FoliageFolder:GetChildren()) do
                     local trunk = tree:FindFirstChild("Trunk")
                     if table.find(allowedTrees, tree.Name) and trunk then
