@@ -139,7 +139,7 @@ local settings = {
     Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour", "Corrupted Thorn Body"},
     explosives = {"Impact Grenade", "Dynamite"},
     weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe", "Chainsaw"}, -- added chainsaw cause i felt like it and because chop aura
-    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar", "Corrupted Axe", "Chainsaw"}, -- not adding scythe cause its annoying
+    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Corrupted Axe", "Chainsaw", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
     LightSources = {"Old Flashlight", "Strong Flashlight"},
     log = {"Log"}, -- log
 }
