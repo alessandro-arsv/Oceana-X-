@@ -1368,7 +1368,7 @@ task.spawn(function()
                 local anyRemaining = false
                 for _, it in ipairs(items:GetChildren()) do
                     if not settings.TeleportLogsToShredder then break end
-                    if nameSelected(it.Name, settings.Log) and not hasIceBlock(it) and not isNear(it, targetPos, 10) then
+                    if nameSelected(it.Name, settings.log) and not hasIceBlock(it) and not isNear(it, targetPos, 10) then
                         anyRemaining = true
                         local args = { it }
                         remotes.RSDI:FireServer(unpack(args))
