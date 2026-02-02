@@ -125,10 +125,11 @@ local settings = {
     TeleportFlammablesToCampfire = false,
     TeleportScrapToScrapper = false,
     TeleportUncookedFoodToCampfire = false,
+    TeleportLogsToShredder = false,
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2", "Corrupted Chest"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
-    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear", "Bouncing Blade", "Corrupted Shotgun", "Corrupted Revolver", "Corrupted Thrown Axe", "Infernal Sword", "Crossbow", "Tactial Shotgun", "Raygun"}, -- if stuff isn't in here its cause i forgot what was there
+    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear", "Bouncing Blade", "Corrupted Shotgun", "Corrupted Revolver", "Corrupted Thrown Axe", "Infernal Sword", "Crossbow", "Tactial Shotgun", "Raygun", "Chainsaw"}, -- if stuff isn't in here its cause i forgot what was there
     excludedCharacters = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"},
     Food = {"Morsel", "Steak", "Cooked Morsel", "Cooked Steak", "Cake", "Berry", "Carrot", "Cooked Ribs", "MRE"},
     UncookedFood = {"Morsel", "Steak"}, -- only meat cause thats the only food that can be cooked by the campfire i think
@@ -137,9 +138,10 @@ local settings = {
     Sacks = {"Good Sack", "Infernal Sack", "Giant Sack"},
     Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour", "Corrupted Thorn Body"},
     explosives = {"Impact Grenade", "Dynamite"},
-    weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe"},
-    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar", "Corrupted Axe"}, -- not adding scythe cause its annoying
+    weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe", "Chainsaw"}, -- added chainsaw cause i felt like it and because chop aura
+    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar", "Corrupted Axe", "Chainsaw"}, -- not adding scythe cause its annoying
     LightSources = {"Old Flashlight", "Strong Flashlight"},
+    log = {"Log"}, -- log
 }
 function teleport_to(targetCF) -- player teleport
     local i = char_info()
@@ -611,6 +613,14 @@ AutoFarmTab:Toggle({
     end
 })
 AutoFarmTab:Toggle({
+    Title = "Teleport uncooked food to campfire",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.TeleportUncookedFoodToCampfire = state
+    end
+})
+AutoFarmTab:Toggle({
     Title = "Teleport scrap to scrapper",
     Type = "Toggle",
     Value = false,
@@ -619,11 +629,11 @@ AutoFarmTab:Toggle({
     end
 })
 AutoFarmTab:Toggle({
-    Title = "Teleport uncooked food to campfire",
+    Title = "Teleport logs to shredder",
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
-        settings.TeleportUncookedFoodToCampfire = state
+        settings.TeleportLogsToShredder = state
     end
 })
 
@@ -1323,6 +1333,36 @@ task.spawn(function()
                 end
                 if settings.TeleportScrapToScrapper and not anyRemaining then
                     settings.TeleportScrapToScrapper = false
+                end
+            end
+        end
+        if settings.TeleportLogsToShredder then
+            local scrapper = workspace.Map.Campground.Scrapper and workspace.Map.Campground.Scrapper:FindFirstChild("GlowEffect")
+            local items = itemsFolder or workspace:FindFirstChild("Items")
+            if not scrapper or not scrapper:IsA("BasePart") or not items then
+                settings.TeleportLogsToShredder = false
+            else
+                local targetPos = scrapper.Position
+                local anyRemaining = false
+                for _, it in ipairs(items:GetChildren()) do
+                    if not settings.TeleportLogsToShredder then break end
+                    if nameSelected(it.Name, settings.Log) and not hasIceBlock(it) and not isNear(it, targetPos, 10) then
+                        anyRemaining = true
+                        local args = { it }
+                        remotes.RSDI:FireServer(unpack(args))
+                        task.wait(0.03)
+                        local targetCF = scrapper.CFrame + Vector3.new(0, 9, 0)
+                        if it:IsA("BasePart") then
+                            it.CFrame = targetCF
+                        elseif it:IsA("Model") and it.PrimaryPart then
+                            it:SetPrimaryPartCFrame(targetCF)
+                        end
+                        remotes.SDI:FireServer(unpack(args))
+                        task.wait(0.05)
+                    end
+                end
+                if settings.TeleportLogsToShredder and not anyRemaining then
+                    settings.TeleportLogsToShredder = false
                 end
             end
         end
