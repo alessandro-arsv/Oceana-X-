@@ -374,6 +374,28 @@ ItemsTab:Button({
     end
 })
 ItemsTab:Button({
+    Title = "Bring all gems",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local gemItems = {"Cultist Gem", "Gem of the Forest", "Gem of the Forest Fragment"}
+        for _, item in ipairs(allItems) do
+            local isGem = false
+            for _, gemName in ipairs(gemItems) do
+                if item.Name == gemName then
+                    isGem = true
+                    break
+                end
+            end
+            if isGem then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
     Title = "Bring all saplings",
     Callback = function()
         local i = char_info()
