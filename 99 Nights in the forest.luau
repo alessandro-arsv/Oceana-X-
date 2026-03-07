@@ -6,8 +6,6 @@
 -- this was pushed back i work on other things
 
 --[[ future new tabs: 
-    ESP
-    Movement
     World
 ]]
 
@@ -24,7 +22,6 @@ local FoliageFolder = workspace.Map:WaitForChild("Foliage")
 local TweenService = game:GetService("TweenService")
 local allItems = {}
 local characters = {}
-
 
 local vers = "eeea3871e0458b7626f446121fbe58eb61689229"
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/" .. vers .. "/dist/main.lua"))()
@@ -100,17 +97,6 @@ function item_teleport(item)
     end
     remotes.SDI:FireServer(unpack(args))
 end
-function teleport_to_cframe(targetCF)
-    local i = char_info()
-    if not i or not i.ROOT then return end
-    if settings.UseTween then
-        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear)
-        local tween = TweenService:Create(i.ROOT, tweenInfo, { CFrame = targetCF })
-        tween:Play()
-    elseif settings.BasicTeleport then
-        i.ROOT.CFrame = targetCF
-    end 
-end
 local settings = {
     SpamPlant = false,
     PlantOrbit = false,
@@ -135,21 +121,72 @@ local settings = {
     CampfireTracers = false,
     UseTween = true,
     BasicTeleport = false,
-    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2"},
+    TeleportToCursor = false,
+    TeleportFlammablesToCampfire = false,
+    TeleportScrapToScrapper = false,
+    TeleportUncookedFoodToCampfire = false,
+    TeleportLogsToShredder = false,
+    ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2", "Corrupted Chest"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
-    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear"},
+    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear", "Bouncing Blade", "Corrupted Shotgun", "Corrupted Revolver", "Corrupted Thrown Axe", "Infernal Sword", "Crossbow", "Tactial Shotgun", "Raygun", "Chainsaw"}, -- if stuff isn't in here its cause i forgot what was there
     excludedCharacters = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"},
     Food = {"Morsel", "Steak", "Cooked Morsel", "Cooked Steak", "Cake", "Berry", "Carrot", "Cooked Ribs", "MRE"},
+    UncookedFood = {"Morsel", "Steak"}, -- only meat cause thats the only food that can be cooked by the campfire i think
     sapling = {"Sapling"}, -- sapling
     Heals = {"Bandage", "MedKit"},
     Sacks = {"Good Sack", "Infernal Sack", "Giant Sack"},
-    Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour"},
+    Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour", "Corrupted Thorn Body"},
     explosives = {"Impact Grenade", "Dynamite"},
-    weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe"},
-    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
+    weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe", "Chainsaw"}, -- added chainsaw cause i felt like it and because chop aura
+    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Corrupted Axe", "Chainsaw", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
     LightSources = {"Old Flashlight", "Strong Flashlight"},
+    log = {"Log"}, -- log
 }
+function teleport_to(targetCF) -- player teleport
+    local i = char_info()
+    if not i or not i.ROOT or not i.CHAR then return end
+    local targetPos
+    local t = typeof(targetCF)
+    if t == "CFrame" then
+        targetPos = targetCF.Position
+    elseif t == "Vector3" then
+        targetPos = targetCF
+    elseif  t == "Instance" then
+        if targetCF:IsA("BasePart") then
+            targetPos = targetCF.Position
+        elseif targetCF:IsA("Model") and targetCF.PrimaryPart then
+            targetPos = targetCF.PrimaryPart.Position
+        else
+            return
+        end
+    else
+        return
+    end
+    local rp = RaycastParams.new()
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.FilterDescendantsInstances = {i.CHAR}
+    local origin = targetPos + Vector3.new(0, 50, 0)
+    local hit = workspace:Raycast(origin, Vector3.new(0, -200, 0), rp)
+    local actualPos = hit and (hit.Position + Vector3.new(0, 3, 0)) or targetPos
+    local _, yaw = i.ROOT.CFrame:ToEulerAnglesYXZ()
+    local actualCF = CFrame.new(actualPos) * CFrame.Angles(0, yaw, 0)
+    i.ROOT.Anchored = false
+    if settings.UseTween then
+        local dist = (i.ROOT.Position - actualPos).Magnitude
+        local duration = math.clamp(dist / 200, 0.15, 2)
+        local oldCollide = i.ROOT.CanCollide
+        i.ROOT.CanCollide = false
+        local tween = TweenService:Create(i.ROOT, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = actualCF})
+        tween:Play()
+        tween.Completed:Connect(function()
+            i.ROOT.CanCollide = oldCollide
+        end)
+    else
+        i.CHAR:PivotTo(actualCF)
+    end
+end
+
 -- SAPLINGS TAB
 local SaplingsTab = Window:Tab({ 
     Title = "Saplings",
@@ -331,6 +368,28 @@ ItemsTab:Button({
                 end
             end
             if isFood then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all gems",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local gemItems = {"Cultist Gem", "Gem of the Forest", "Gem of the Forest Fragment"}
+        for _, item in ipairs(allItems) do
+            local isGem = false
+            for _, gemName in ipairs(gemItems) do
+                if item.Name == gemName then
+                    isGem = true
+                    break
+                end
+            end
+            if isGem then
                 item_teleport(item)
             end
         end
@@ -519,7 +578,7 @@ local CombatTab = Window:Tab({
 })
 CombatTab:Toggle({
     Title = "Kill Aura",
-    Desc = "Warning: Melee weapons only (hold out weapon to actually do kill aura)",
+    Desc = "Warning: Melee weapons only (hold out strongest weapon to actually do kill aura)",
     Type = "Toggle",
     Value = false,
     Callback = function(state) 
@@ -557,6 +616,46 @@ CombatTab:Slider({
     },
     Callback = function(value)
         settings.ChopAuraRange = value
+    end
+})
+
+-- AUTOFARM TAB
+local AutoFarmTab = Window:Tab({ -- i got working
+    Title = "Auto Farm",
+    Icon = "lucide:wheat",
+    IconColor = Color3.fromHex("#b47016"),
+    IconShape = "Square"
+})
+AutoFarmTab:Toggle({
+    Title = "Teleport flammables to campfire",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.TeleportFlammablesToCampfire = state
+    end
+})
+AutoFarmTab:Toggle({
+    Title = "Teleport uncooked food to campfire",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.TeleportUncookedFoodToCampfire = state
+    end
+})
+AutoFarmTab:Toggle({
+    Title = "Teleport scrap to scrapper",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.TeleportScrapToScrapper = state
+    end
+})
+AutoFarmTab:Toggle({
+    Title = "Teleport logs to shredder",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state) 
+        settings.TeleportLogsToShredder = state
     end
 })
 
@@ -649,11 +748,45 @@ ESPTab:Toggle({
 })
 
 -- MOVEMENT TAB
-local MovementTab = Window:Tab({ -- i do later
+local MovementTab = Window:Tab({
     Title = "Movement",
     Icon = "fast-forward",
     IconColor = Color3.fromHex("#5900ff"),
     IconShape = "Square" 
+})
+MovementTab:Toggle({
+    Title = "Teleport to cursor",
+    Desc = "teleports on click",
+    Type = "Toggle",
+    Value = false,
+    Callback = function(state)
+        local tpcon
+        if tpcon then
+            tpcon:Disconnect()
+            tpcon = nil
+        end
+        settings.TeleportToCursor = state
+        if not state then
+            return
+        end
+        local i = char_info()
+        if not i or not i.CHAR then return end
+        local mouse = i.LP:GetMouse()
+        tpcon = mouse.Button1Down:Connect(function()
+            if not settings.TeleportToCursor then return end
+            local hit = mouse.Hit
+            if hit then
+                teleport_to(hit)
+            end
+        end)
+    end
+})
+MovementTab:Button({
+    Title = "Teleport to campfire",
+    Callback = function()
+        local campfireInner = workspace.Map.Campground.MainFire.InnerTouchZone
+        teleport_to(campfireInner.CFrame)
+    end
 })
 
 -- SETTINGS
@@ -676,17 +809,22 @@ SettingsTab:Toggle({
     Title = "Movement: Use tween",
     Type = "Toggle",
     Value = true,
-    Callback = function(value)
-        settings.UseTween = value
+    Callback = function(state)
+        settings.UseTween = state
     end
 })
+SettingsTab:Divider()
 SettingsTab:Toggle({
     Title = "Movement: Basic teleportation",
     Type = "Toggle",
     Value = false,
-    Callback = function(value)
-        settings.BasicTeleport = value
+    Callback = function(state)
+        settings.BasicTeleport = state
     end
+})
+SettingsTab:Divider()
+SettingsTab:Paragraph({
+    Title = "Movement: If both toggles are disabled then defaulted to basic teleportation."
 })
 
 local a = 0
@@ -756,7 +894,7 @@ task.spawn(function()
             end
             if weapon then
                 local resourceDamage = weapon:GetAttribute("WeaponResourceDamage") or 10
-                local allowedTrees = {"Small Tree", "TreeBig1", "TreeBig2", "TreeBig3"}
+                local allowedTrees = {"Small Tree", "TreeBig1", "TreeBig2", "TreeBig3", "Corrupted Small Tree", "Corrupted TreeBig1", "Corrupted TreeBig2", "Corrupted TreeBig3", "Snowy Small Tree", "Fairy Small Tree", "FairyTreeBig1", "FairyTreeBig2", "FairyTreeBig3"}
                 for _, tree in ipairs(FoliageFolder:GetChildren()) do
                     local trunk = tree:FindFirstChild("Trunk")
                     if table.find(allowedTrees, tree.Name) and trunk then
@@ -1097,6 +1235,156 @@ task.spawn(function()
                     campfireLabel.Enabled = true
                 else
                     if campfireLabel then campfireLabel.Enabled = false end
+                end
+            end
+        end
+    end
+end)
+-- autofarm stuff
+task.spawn(function()
+    local function hasIceBlock(it: Instance): boolean
+        if it.Name == "IceBlock" then return true end
+        if it:IsA("Model") then
+            return it:FindFirstChild("IceBlock", true) ~= nil
+        elseif it:IsA("BasePart") then
+            local p = it.Parent
+            return p and p:IsA("Model") and p:FindFirstChild("IceBlock", true) ~= nil
+        end
+        return false
+    end
+    local function isNear(it: Instance, targetPos: Vector3, thresh: number): boolean
+        local pos
+        if it:IsA("BasePart") then
+            pos = it.Position
+        elseif it:IsA("Model") and it.PrimaryPart then
+            pos = it.PrimaryPart.Position
+        end
+        return pos ~= nil and (pos - targetPos).Magnitude <= (thresh or 8)
+    end
+    local function nameSelected(name: string, list: {string}): boolean
+        for _, n in ipairs(list) do
+            if n == name then return true end
+        end
+        return false
+    end
+    while task.wait() do
+        if settings.TeleportFlammablesToCampfire then
+            local innerZone = workspace.Map.Campground.MainFire.InnerTouchZone
+            local items = itemsFolder or workspace:FindFirstChild("Items")
+            if not innerZone or not innerZone:IsA("BasePart") or not items then
+                settings.TeleportFlammablesToCampfire = false
+            else
+                local targetPos = innerZone.Position
+                local anyRemaining = false
+                for _, it in ipairs(items:GetChildren()) do
+                    if not settings.TeleportFlammablesToCampfire then break end
+                    if nameSelected(it.Name, settings.FlammableItems) and not hasIceBlock(it) and not isNear(it, targetPos, 10) then
+                        anyRemaining = true
+                        local args = { it }
+                        remotes.RSDI:FireServer(unpack(args))
+                        task.wait(0.03)
+                        local targetCF = innerZone.CFrame + Vector3.new(0, 13, 0)
+                        if it:IsA("BasePart") then
+                            it.CFrame = targetCF
+                        elseif it:IsA("Model") and it.PrimaryPart then
+                            it:SetPrimaryPartCFrame(targetCF)
+                        end
+                        remotes.SDI:FireServer(unpack(args))
+                        task.wait(0.05)
+                    end
+                end
+                if settings.TeleportFlammablesToCampfire and not anyRemaining then
+                    settings.TeleportFlammablesToCampfire = false
+                end
+            end
+        end
+        if settings.TeleportUncookedFoodToCampfire then
+            local innerZone = workspace.Map.Campground.MainFire.InnerTouchZone
+            local items = itemsFolder or workspace:FindFirstChild("Items")
+            if not innerZone or not innerZone:IsA("BasePart") or not items then
+                settings.TeleportUncookedFoodToCampfire = false
+            else
+                local targetPos = innerZone.Position
+                local anyRemaining = false
+                for _, it in ipairs(items:GetChildren()) do
+                    if not settings.TeleportUncookedFoodToCampfire then break end
+                    if nameSelected(it.Name, settings.UncookedFood) and not hasIceBlock(it) and not isNear(it, targetPos, 10) then
+                        anyRemaining = true
+                        local args = { it }
+                        remotes.RSDI:FireServer(unpack(args))
+                        task.wait(0.03)
+                        local targetCF = innerZone.CFrame + Vector3.new(0, 13, 0)
+                        if it:IsA("BasePart") then
+                            it.CFrame = targetCF
+                        elseif it:IsA("Model") and it.PrimaryPart then
+                            it:SetPrimaryPartCFrame(targetCF)
+                        end
+                        remotes.SDI:FireServer(unpack(args))
+                        task.wait(0.05)
+                    end
+                end
+                if settings.TeleportUncookedFoodToCampfire and not anyRemaining then
+                    settings.TeleportUncookedFoodToCampfire = false
+                end
+            end
+        end
+        if settings.TeleportScrapToScrapper then
+            local scrapper = workspace.Map.Campground.Scrapper and workspace.Map.Campground.Scrapper:FindFirstChild("GlowEffect")
+            local items = itemsFolder or workspace:FindFirstChild("Items")
+            if not scrapper or not scrapper:IsA("BasePart") or not items then
+                settings.TeleportScrapToScrapper = false
+            else
+                local targetPos = scrapper.Position
+                local anyRemaining = false
+                for _, it in ipairs(items:GetChildren()) do
+                    if not settings.TeleportScrapToScrapper then break end
+                    if nameSelected(it.Name, settings.ScrapItems) and not hasIceBlock(it) and not isNear(it, targetPos, 10) then
+                        anyRemaining = true
+                        local args = { it }
+                        remotes.RSDI:FireServer(unpack(args))
+                        task.wait(0.03)
+                        local targetCF = scrapper.CFrame + Vector3.new(0, 9, 0)
+                        if it:IsA("BasePart") then
+                            it.CFrame = targetCF
+                        elseif it:IsA("Model") and it.PrimaryPart then
+                            it:SetPrimaryPartCFrame(targetCF)
+                        end
+                        remotes.SDI:FireServer(unpack(args))
+                        task.wait(0.05)
+                    end
+                end
+                if settings.TeleportScrapToScrapper and not anyRemaining then
+                    settings.TeleportScrapToScrapper = false
+                end
+            end
+        end
+        if settings.TeleportLogsToShredder then
+            local scrapper = workspace.Map.Campground.Scrapper and workspace.Map.Campground.Scrapper:FindFirstChild("GlowEffect")
+            local items = itemsFolder or workspace:FindFirstChild("Items")
+            if not scrapper or not scrapper:IsA("BasePart") or not items then
+                settings.TeleportLogsToShredder = false
+            else
+                local targetPos = scrapper.Position
+                local anyRemaining = false
+                for _, it in ipairs(items:GetChildren()) do
+                    if not settings.TeleportLogsToShredder then break end
+                    if nameSelected(it.Name, settings.log) and not hasIceBlock(it) and not isNear(it, targetPos, 10) then
+                        anyRemaining = true
+                        local args = { it }
+                        remotes.RSDI:FireServer(unpack(args))
+                        task.wait(0.03)
+                        local targetCF = scrapper.CFrame + Vector3.new(0, 9, 0)
+                        if it:IsA("BasePart") then
+                            it.CFrame = targetCF
+                        elseif it:IsA("Model") and it.PrimaryPart then
+                            it:SetPrimaryPartCFrame(targetCF)
+                        end
+                        remotes.SDI:FireServer(unpack(args))
+                        task.wait(0.05)
+                    end
+                end
+                if settings.TeleportLogsToShredder and not anyRemaining then
+                    settings.TeleportLogsToShredder = false
                 end
             end
         end
