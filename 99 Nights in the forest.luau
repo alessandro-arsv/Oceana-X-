@@ -129,17 +129,17 @@ local settings = {
     ExcludeItems = {"Item Chest", "Item Chest2", "Item Chest3", "Item Chest4", "Item Chest5", "Item Chest6", "Item Chest7", "StoneChest1", "StoneChest2", "Halloween Maze Chest", "Halloween Chest1", "Mossy Chest", "Stronghold Diamond Chest", "Volcanic Chest1", "Volcanic Chest2", "Coin Stack", "Alien Chest", "Hardmode Crate", "Snow Chest1", "Snow Chest2", "Corrupted Chest"},
     FlammableItems = {"Log", "Oil Barrel", "Coal", "Fuel Canister", "Chair", "Cultist", "Crossbow Cultist", "Bear Corpse", "Wolf Corpse", "Biofuel", "Alpha Wolf Corpse", "Alien", "Alien Elite"},
     ScrapItems = {"Broken Microwave", "Broken Fan", "Bolt", "Old Radio", "Sheet Metal", "Tyre", "Cultist Experiment", "Washing Machine", "Cultist Prototype", "Gem of the Forest", "Cultist Gem", "Old Car Engine", "Metal Chair", "UFO Component", "UFO Scrap"},
-    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear", "Bouncing Blade", "Corrupted Shotgun", "Corrupted Revolver", "Corrupted Thrown Axe", "Infernal Sword", "Crossbow", "Tactial Shotgun", "Raygun", "Chainsaw"}, -- if stuff isn't in here its cause i forgot what was there
+    Weapons =  {"Revolver", "Rifle", "Scythe", "Morningstar", "Explosive Rifle", "Kunai", "Strong Axe", "Good Axe", "Spear", "Bouncing Blade", "Corrupted Shotgun", "Corrupted Revolver", "Corrupted Thrown Axe", "Infernal Sword", "Crossbow", "Tactial Shotgun", "Raygun", "Chainsaw"},
     excludedCharacters = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"},
     Food = {"Morsel", "Steak", "Cooked Morsel", "Cooked Steak", "Cake", "Berry", "Carrot", "Cooked Ribs", "MRE"},
-    UncookedFood = {"Morsel", "Steak"}, -- only meat cause thats the only food that can be cooked by the campfire i think
+    UncookedFood = {"Morsel", "Steak", "Morsel?"}, -- only meat cause thats the only food that can be cooked by the campfire i think
     sapling = {"Sapling"}, -- sapling
     Heals = {"Bandage", "MedKit"},
     Sacks = {"Good Sack", "Infernal Sack", "Giant Sack"},
     Armor = {"Leather Body", "Iron Body", "Thorn Body", "Alien Armour", "Obsidiron Body", "Vampire Cloak", "Riot Shield", "Poison Armour", "Corrupted Thorn Body"},
     explosives = {"Impact Grenade", "Dynamite"},
-    weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe", "Chainsaw"}, -- added chainsaw cause i felt like it and because chop aura
-    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Corrupted Axe", "Chainsaw", "Spear", "Morningstar"}, -- not adding scythe cause its annoying
+    weaponaxesithink = {"Old Axe", "Good Axe", "Strong Axe", "Chainsaw"},
+    MeleeOnlyWeapons = {"Old Axe", "Good Axe", "Strong Axe", "Corrupted Axe", "Chainsaw", "Spear", "Morningstar"},
     LightSources = {"Old Flashlight", "Strong Flashlight"},
     log = {"Log"}, -- log
 }
@@ -330,28 +330,6 @@ ItemsTab:Button({
     end
 })
 ItemsTab:Button({
-    Title = "Bring all scrap",
-    Callback = function()
-        local i = char_info()
-        if itemsFolder then
-            allItems = itemsFolder:GetChildren()
-        end
-        local scrapItems = settings.ScrapItems
-        for _, item in ipairs(allItems) do
-            local isScrap = false
-            for _, scrapName in ipairs(scrapItems) do
-                if item.Name == scrapName then
-                    isScrap = true
-                    break
-                end
-            end
-            if isScrap then
-                item_teleport(item)
-            end
-        end
-    end
-})
-ItemsTab:Button({
     Title = "Bring all food",
     Callback = function()
         local i = char_info()
@@ -412,6 +390,50 @@ ItemsTab:Button({
                 end
             end
             if isSapling then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all scrap",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local scrapItems = settings.ScrapItems
+        for _, item in ipairs(allItems) do
+            local isScrap = false
+            for _, scrapName in ipairs(scrapItems) do
+                if item.Name == scrapName then
+                    isScrap = true
+                    break
+                end
+            end
+            if isScrap then
+                item_teleport(item)
+            end
+        end
+    end
+})
+ItemsTab:Button({
+    Title = "Bring all logs",
+    Callback = function()
+        local i = char_info()
+        if itemsFolder then
+            allItems = itemsFolder:GetChildren()
+        end
+        local logItems = settings.log
+        for _, item in ipairs(allItems) do
+            local isLog = false
+            for _, logName in ipairs(logItems) do
+                if item.Name == logName then
+                    isLog = true
+                    break
+                end
+            end
+            if isLog then
                 item_teleport(item)
             end
         end
